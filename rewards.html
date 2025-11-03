@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мои награды - TagTrip</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="tagtrip-styles.css">
+    <link rel="stylesheet" href="themes.css">
+    
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <style>
+        .rewards-header {
+            background: linear-gradient(135deg, var(--accent-color, #FF9800), var(--primary-color, #4CAF50));
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .rewards-header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .rewards-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .stats-section {
+            padding: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            margin-bottom: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 16px 12px;
+            border-radius: var(--border-radius, 12px);
+            text-align: center;
+            box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.1));
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color, #4CAF50);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #999999);
+            line-height: 1.2;
+        }
+        
+        .rewards-list {
+            padding: 0 16px;
+        }
+        
+        .reward-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: var(--border-radius, 12px);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.1));
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reward-card:active {
+            transform: scale(0.98);
+            box-shadow: var(--shadow-medium, 0 4px 12px rgba(0, 0, 0, 0.15));
+        }
+        
+        .reward-card.test {
+            border: 2px solid #2196F3;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.05), rgba(33, 150, 243, 0.1));
+        }
+        
+        .reward-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .reward-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .reward-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-color, #4CAF50);
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 4px 0;
+        }
+        
+        .reward-code.test {
+            color: #2196F3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+        
+        .reward-discount {
+            background: var(--accent-color, #FF9800);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .reward-discount.test {
+            background: #2196F3;
+        }
+        
+        .reward-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .partner-name {
+            font-size: 14px;
+            color: var(--tg-theme-text-color, #000000);
+            font-weight: 500;
+        }
+        
+        .route-badge {
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .route-badge.test {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+        
+        .reward-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn {
+            background: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+        
+        .qr-btn {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            color: var(--tg-theme-text-color, #000000);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .instructions {
+            margin: 20px 16px;
+            padding: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            border-radius: var(--border-radius, 12px);
+            border-left: 4px solid var(--primary-color, #4CAF50);
+        }
+        
+        .instructions h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .instructions p {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.5;
+        }
+        
+        .instructions .contact {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-top: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .empty-subtitle {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .empty-action {
+            background: var(--primary-color, #4CAF50);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius, 12px);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .empty-action:active {
+            transform: scale(0.95);
+        }
+        
+        /* QR Code Modal */
+        .qr-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .qr-modal-content {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: var(--border-radius, 12px);
+            padding: 24px;
+            text-align: center;
+            max-width: 280px;
+            margin: 0 20px;
+        }
+        
+        .qr-modal h3 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .qr-code-container {
+            margin: 16px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .qr-code-container canvas {
+            border-radius: 8px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-btn.primary {
+            background: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+        
+        .modal-btn.secondary {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .copied-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--success-color, #4CAF50);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius, 12px);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .copied-notification.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 350px) {
+            .stats-grid {
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 12px 8px;
+            }
+            
+            .stat-number {
+                font-size: 20px;
+            }
+            
+            .rewards-list {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Шапка страницы -->
+        <header class="rewards-header">
+            <h1>🎁 Мои награды</h1>
+            <p>Ваши промокоды и достижения</p>
+        </header>
+
+        <!-- Статистика -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRewards">1</div>
+                    <div class="stat-label">Всего наград</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="usedRewards">0</div>
+                    <div class="stat-label">Использовано</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="savedMoney">10₽</div>
+                    <div class="stat-label">Сэкономлено</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Список наград -->
+            <div class="rewards-list" id="rewardsList">
+                <!-- ТЕСТОВЫЙ ПРОМОКОД (всегда показывается первым) -->
+                <div class="reward-card test">
+                    <div class="reward-header">
+                        <div class="reward-info">
+                            <h3>🧪 КафеПартнер (ТЕСТ)</h3>
+                            <div class="reward-code test">TESTPROMO</div>
+                        </div>
+                        <div class="reward-discount test">1% скидка</div>
+                    </div>
+                    
+                    <div class="reward-details">
+                        <span class="partner-name">КафеПартнер</span>
+                        <span class="route-badge test">🧪 Тестовый</span>
+                    </div>
+                    
+                    <div class="reward-actions">
+                        <button class="action-btn copy-btn" onclick="copyPromoCode('TESTPROMO')">
+                            📋 Копировать
+                        </button>
+                        <button class="action-btn qr-btn" onclick="showQrCode('TESTPROMO')">
+                            📱 QR-код
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Остальные награды будут динамически загружены -->
+                <div id="dynamicRewards">
+                    <!-- Заработанные награды появятся здесь -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Инструкция по использованию -->
+        <section class="instructions">
+            <h3>💡 Как использовать промокоды</h3>
+            <p><strong>1.</strong> Назовите код или покажите QR-код на кассе</p>
+            <p><strong>2.</strong> Получите скидку на покупку</p>
+            <p><strong>3.</strong> Наслаждайтесь экономией!</p>
+            <p><strong>🧪 Тестовый промокод</strong> дается всем пользователям для демонстрации функций.</p>
+            <div class="contact">
+                📞 По вопросам: <a href="https://t.me/zxcwed" style="color: var(--tg-theme-link-color, #2481cc);">@zxcwed</a>
+            </div>
+        </section>
+
+        <!-- Нижнее меню -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" onclick="goHome()">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Главная</span>
+            </button>
+            <button class="nav-btn" onclick="openRoutes()">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Маршруты</span>
+            </button>
+            <button class="nav-btn" onclick="openMap()">
+                <span class="nav-icon">🧭</span>
+                <span class="nav-label">Карта</span>
+            </button>
+            <button class="nav-btn active" onclick="openRewards()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Награды</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="qr-modal" id="qrModal">
+        <div class="qr-modal-content">
+            <h3 id="qrTitle">QR-код промокода</h3>
+            <div class="qr-code-container" id="qrCodeContainer">
+                <!-- QR код будет сгенерирован здесь -->
+            </div>
+            <p id="qrCode" style="font-family: 'Courier New', monospace; font-weight: bold; margin: 10px 0;"></p>
+            <div class="modal-actions">
+                <button class="modal-btn primary" onclick="copyFromModal()">📋 Копировать</button>
+                <button class="modal-btn secondary" onclick="closeQrModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомление о копировании -->
+    <div class="copied-notification" id="copiedNotification">
+        ✅ Промокод скопирован!
+    </div>
+
+    <script src="telegram.js"></script>
+    <script>
+        class RewardsManager {
+            constructor() {
+                this.rewards = [];
+                this.testReward = {
+                    id: 'testpromo',
+                    code: 'TESTPROMO',
+                    partner: 'КафеПартнер',
+                    discount: '1%',
+                    routeName: 'Тестовый',
+                    unlockedAt: new Date().toISOString(),
+                    used: false,
+                    type: 'test'
+                };
+                this.init();
+            }
+
+            init() {
+                this.loadRewards();
+                this.renderRewards();
+                this.updateStats();
+            }
+
+            loadRewards() {
+                // Загружаем данные из localStorage
+                const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
+                this.rewards = stats.unlockedRewards || [];
+                
+                // Добавляем тестовый промокод если его еще нет
+                if (!this.rewards.find(r => r.type === 'test')) {
+                    this.rewards.unshift(this.testReward);
+                    this.saveRewards();
+                }
+            }
+
+            saveRewards() {
+                const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
+                stats.unlockedRewards = this.rewards;
+                localStorage.setItem('tagtrip_stats', JSON.stringify(stats));
+            }
+
+            renderRewards() {
+                const dynamicRewardsContainer = document.getElementById('dynamicRewards');
+                
+                // Фильтруем только заработанные награды (не тестовые)
+                const earnedRewards = this.rewards.filter(reward => reward.type !== 'test');
+
+                if (earnedRewards.length === 0) {
+                    dynamicRewardsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--tg-theme-hint-color, #999999);">
+                            <p>🎯 Пройдите маршруты, чтобы получить больше промокодов!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                dynamicRewardsContainer.innerHTML = earnedRewards.map(reward => `
+                    <div class="reward-card">
+                        <div class="reward-header">
+                            <div class="reward-info">
+                                <h3>☕ КафеПартнер</h3>
+                                <div class="reward-code">${reward.code || 'JOHNLENIN10'}</div>
+                            </div>
+                            <div class="reward-discount">10% скидка</div>
+                        </div>
+                        
+                        <div class="reward-details">
+                            <span class="partner-name">КафеПартнер</span>
+                            <span class="route-badge">🏛️ ${reward.routeName || 'Джон Ленин'}</span>
+                        </div>
+                        
+                        <div class="reward-actions">
+                            <button class="action-btn copy-btn" onclick="copyPromoCode('${reward.code || 'JOHNLENIN10'}')">
+                                📋 Копировать
+                            </button>
+                            <button class="action-btn qr-btn" onclick="showQrCode('${reward.code || 'JOHNLENIN10'}')">
+                                📱 QR-код
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateStats() {
+                const totalRewards = this.rewards.length;
+                const usedRewards = this.rewards.filter(r => r.used).length;
+                const savedMoney = (this.rewards.filter(r => r.type !== 'test').length * 50) + 10; // +10₽ за тестовый промокод
+                
+                document.getElementById('totalRewards').textContent = totalRewards;
+                document.getElementById('usedRewards').textContent = usedRewards;
+                document.getElementById('savedMoney').textContent = savedMoney + '₽';
+            }
+        }
+
+        // Копирование промокода
+        function copyPromoCode(code) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showCopiedNotification();
+                }).catch(() => {
+                    fallbackCopy(code);
+                });
+            } else {
+                fallbackCopy(code);
+            }
+
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('success');
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopiedNotification();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showCopiedNotification() {
+            const notification = document.getElementById('copiedNotification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // QR код
+        function showQrCode(code) {
+            const modal = document.getElementById('qrModal');
+            const qrContainer = document.getElementById('qrCodeContainer');
+            const qrTitle = document.getElementById('qrTitle');
+            const qrCodeText = document.getElementById('qrCode');
+
+            // Очищаем предыдущий QR код
+            qrContainer.innerHTML = '';
+
+            // Генерируем новый QR код
+            QRCode.toCanvas(code, {
+                width: 200,
+                height: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, (error, canvas) => {
+                if (error) {
+                    console.error('QR Code generation error:', error);
+                    qrContainer.innerHTML = '<p>Ошибка генерации QR-кода</p>';
+                } else {
+                    qrContainer.appendChild(canvas);
+                }
+            });
+
+            qrTitle.textContent = code === 'TESTPROMO' ? 'QR-код тестового промокода' : 'QR-код промокода';
+            qrCodeText.textContent = code;
+            modal.style.display = 'flex';
+
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('medium');
+            }
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').style.display = 'none';
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+        }
+
+        function copyFromModal() {
+            const code = document.getElementById('qrCode').textContent;
+            copyPromoCode(code);
+        }
+
+        // Навигация
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        function openRoutes() {
+            window.location.href = 'routes.html';
+        }
+
+        function goToRoutes() {
+            window.location.href = 'index.html';
+        }
+
+        function openMap() {
+            window.location.href = 'route-john-lenin.html';
+        }
+
+        function openRewards() {
+            // Уже на странице наград
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+        }
+
+        // Закрытие модального окна по клику вне его
+        document.getElementById('qrModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQrModal();
+            }
+        });
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            new RewardsManager();
+            
+            console.log('Страница наград загружена с тестовым промокодом');
+            
+            // Применяем темную тему если нужно
+            if (window.telegramApp && window.telegramApp.tg.colorScheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        });
+    </script>
+</body>
+</html>

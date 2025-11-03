@@ -34,7 +34,7 @@
         .map-container {
             position: relative;
             width: 100%;
-            height: calc(100vh - 120px);
+            height: calc(100vh - 100px); /* УМЕНЬШИЛ отступ для более тонкой плашки */
             max-width: var(--tg-viewport-width, 375px);
             margin: 0 auto;
         }
@@ -50,7 +50,7 @@
         .route-header {
             background: linear-gradient(135deg, #8B4513, #D2691E);
             color: white;
-            padding: 16px;
+            padding: 12px 16px; /* УМЕНЬШИЛ padding для тонкой плашки */
             margin: 0;
             position: sticky;
             top: 0;
@@ -65,10 +65,21 @@
             gap: 8px;
         }
         
+        .route-info h1 {
+            font-size: 18px; /* УМЕНЬШИЛ размер заголовка */
+            margin: 0;
+        }
+        
+        .route-info p {
+            font-size: 12px; /* УМЕНЬШИЛ размер подзаголовка */
+            margin: 0;
+            opacity: 0.9;
+        }
+        
         .route-stats {
             display: flex;
-            gap: 16px;
-            font-size: 14px;
+            gap: 12px; /* УМЕНЬШИЛ отступы */
+            font-size: 12px; /* УМЕНЬШИЛ размер */
         }
         
         .route-stat {
@@ -176,8 +187,8 @@
         /* Адаптивность */
         @media (max-width: 350px) {
             .route-stats {
-                gap: 12px;
-                font-size: 13px;
+                gap: 8px;
+                font-size: 11px;
             }
             
             .control-btn {
@@ -186,7 +197,7 @@
             }
         }
         
-        /* Стили для попапов Leaflet */
+        /* Стили для попапов Leaflet - УПРОЩЕННЫЕ */
         .leaflet-popup-content {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 14px;
@@ -194,7 +205,7 @@
         }
         
         .leaflet-popup-content h4 {
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             color: #333;
             font-size: 16px;
         }
@@ -202,17 +213,18 @@
         .leaflet-popup-content p {
             margin: 0;
             color: #666;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Шапка маршрута -->
+        <!-- ТОНКАЯ шапка маршрута -->
         <header class="route-header">
             <div class="route-info">
                 <div>
                     <h1>🏛️ Джон Ленин</h1>
-                    <p style="margin: 0; opacity: 0.9; font-size: 14px;">Исторические места Омска</p>
+                    <p>Исторические места Омска</p>
                 </div>
                 <div class="route-stats">
                     <div class="route-stat">
@@ -289,6 +301,12 @@
             {"attribution": "Data by \u0026copy; \u003ca target=\"_blank\" href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca target=\"_blank\" href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
+        // === КОНТУР МАРШРУТА (из оригинального файла) ===
+        var poly_line_route = L.polyline(
+            [[54.99401083539759, 73.36019985859677], [54.99156775430114, 73.36313187292767], [54.99025832317938, 73.36698683629957], [54.98904521584077, 73.3715198902994], [54.98616454646889, 73.37408953103235], [54.985064157680016, 73.37728641653934], [54.984723638762006, 73.38015682106457], [54.98651269885947, 73.38240862814538]],
+            {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 0.7, "renderer": null, "stroke": true, "weight": 8}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
         var icon_b7c6b4172efd285d1fde664b24d844e5 = L.AwesomeMarkers.icon(
             {"extraClasses": "fa-rotate-0", "icon": "play", "iconColor": "white", "markerColor": "green", "prefix": "fa"}
         );
@@ -299,11 +317,11 @@
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
         var popup_9e4e18b61c7fb44f4f03b0fdc3e76beb = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
         popup_9e4e18b61c7fb44f4f03b0fdc3e76beb.setContent(
             `<div>
                 <h4>🏰 Омская крепость</h4>
-                <p><strong>Начальная точка маршрута "Джон Ленин"</strong></p>
-                <p>Историческое сердце Омска, основанное в 1716 году. Здесь начинается ваше путешествие по историческим местам города.</p>
+                <p>Начальная точка маршрута</p>
             </div>`
         );
         marker_c95c0b3c9e5f269dd1b79c8c27ab71b7.bindPopup(popup_9e4e18b61c7fb44f4f03b0fdc3e76beb);
@@ -323,11 +341,11 @@
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
         var popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
         popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1.setContent(
             `<div>
                 <h4>⛪ Успенский собор</h4>
-                <p><strong>Вторая точка маршрута</strong></p>
-                <p>Главный православный храм города, восстановленный в 2007 году. Красивейший образец современной православной архитектуры.</p>
+                <p>Главный храм города</p>
             </div>`
         );
         marker_2f82e38e6d244a8e90b3e76a2a3c4b5d.bindPopup(popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1);
@@ -343,11 +361,11 @@
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
         var popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
         popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0.setContent(
             `<div>
                 <h4>🎭 Драматический театр</h4>
-                <p><strong>Третья точка маршрута</strong></p>
-                <p>Старейший театр Сибири, основанный в 1874 году. Здесь выступали многие знаменитые артисты.</p>
+                <p>Старейший театр Сибири</p>
             </div>`
         );
         marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8.bindPopup(popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0);
@@ -363,11 +381,11 @@
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
         var popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
         popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2.setContent(
             `<div>
                 <h4>🏛️ Литературный музей</h4>
-                <p><strong>Четвертая точка маршрута</strong></p>
-                <p>Музей им. Ф.М. Достоевского, посвященный пребыванию великого писателя в Омске в 1850-1854 годах.</p>
+                <p>Музей Ф.М. Достоевского</p>
             </div>`
         );
         marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9.bindPopup(popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2);
@@ -387,11 +405,11 @@
         ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
 
         var popup_395d34a32d0211b26a4c70ca3fef5f81 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
         popup_395d34a32d0211b26a4c70ca3fef5f81.setContent(
             `<div>
                 <h4>🏁 Финиш маршрута</h4>
-                <p><strong>Конечная точка маршрута "Джон Ленин"</strong></p>
-                <p>Поздравляем! Вы успешно прошли исторический маршрут по центру Омска. Получите свой промокод!</p>
+                <p>Поздравляем с прохождением!</p>
             </div>`
         );
         marker_31fdb790a3d21523569fdaa0f18d1b4a.bindPopup(popup_395d34a32d0211b26a4c70ca3fef5f81);
@@ -586,6 +604,20 @@
             stats.routesCompleted++;
             stats.distanceWalked += 2.5;
             stats.rewardsEarned++;
+            
+            // Сохраняем новую награду
+            if (!stats.unlockedRewards) stats.unlockedRewards = [];
+            stats.unlockedRewards.push({
+                id: 'johnlenin15',
+                code: 'JOHNLENIN15',
+                partner: 'Кофейня "Центральная"',
+                discount: '15%',
+                routeName: 'Джон Ленин',
+                unlockedAt: new Date().toISOString(),
+                used: false,
+                type: 'coffee'
+            });
+            
             localStorage.setItem('tagtrip_stats', JSON.stringify(stats));
             
             // Возвращаем кнопку в исходное состояние

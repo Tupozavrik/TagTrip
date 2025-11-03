@@ -32,7 +32,7 @@ ROUTES_INFO = {
         'distance': '3.2 км', 
         'time': '60 мин',
         'difficulty': '🟡 Средний'
-    },
+    },      
     'cultural': {
         'name': '🏞️ Шаги по Омке',
         'description': 'Музеи, театры и культурные центры',
