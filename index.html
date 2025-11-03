@@ -2,65 +2,139 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой Telegram Бот</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-        }
-        button {
-            background: #0088cc;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 18px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background: #0077bb;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TagTrip - Маршруты по Омску</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/themes.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🤖 Мой Telegram Бот</h1>
-        <p>Добро пожаловать на официальную страницу моего бота!</p>
-        
-        <button onclick="openBot()">Открыть бота</button>
-        <button onclick="showFeatures()">Возможности</button>
-        
-        <div id="features" style="display:none; margin-top: 20px;">
-            <h3>Функции бота:</h3>
-            <ul style="text-align: left;">
-                <li>📝 Ответы на команды</li>
-                <li>🌐 Веб-приложения</li>
-                <li>💬 Интерактивные кнопки</li>
-            </ul>
-        </div>
+    <div class="app-container">
+        <!-- Шапка приложения -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">🗺️ TagTrip</h1>
+                <p class="app-subtitle">Откройте Омск заново</p>
+            </div>
+        </header>
+
+        <!-- Основное содержимое -->
+        <main class="main-content">
+            <!-- Приветственный блок -->
+            <section class="welcome-section">
+                <div class="welcome-card">
+                    <div class="welcome-icon">📍</div>
+                    <h2>Добро пожаловать!</h2>
+                    <p>Исследуйте красивые места Омска по готовым маршрутам и получайте промокоды от наших партнеров</p>
+                </div>
+            </section>
+
+            <!-- Быстрые действия -->
+            <section class="quick-actions">
+                <div class="action-grid">
+                    <button class="action-btn" onclick="openRoutes()">
+                        <div class="btn-icon">🚶‍♂️</div>
+                        <span>Маршруты</span>
+                    </button>
+                    
+                    <button class="action-btn" onclick="openMap()">
+                        <div class="btn-icon">🗺️</div>
+                        <span>Карта</span>
+                    </button>
+                    
+                    <button class="action-btn" onclick="openRewards()">
+                        <div class="btn-icon">🎁</div>
+                        <span>Награды</span>
+                    </button>
+                    
+                    <button class="action-btn" onclick="openProfile()">
+                        <div class="btn-icon">👤</div>
+                        <span>Профиль</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Популярные маршруты -->
+            <section class="popular-routes">
+                <h3 class="section-title">🔥 Популярные маршруты</h3>
+                <div class="routes-preview">
+                    <div class="route-card" onclick="openRoute('historical')">
+                        <div class="route-image historical-bg"></div>
+                        <div class="route-info">
+                            <h4>Исторический центр</h4>
+                            <p>2.5 км • 45 мин</p>
+                            <div class="route-rewards">
+                                <span class="reward-badge">☕ Кофейня</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="route-card" onclick="openRoute('parks')">
+                        <div class="route-image parks-bg"></div>
+                        <div class="route-info">
+                            <h4>Парки и скверы</h4>
+                            <p>3.2 км • 60 мин</p>
+                            <div class="route-rewards">
+                                <span class="reward-badge">🍕 Ресторан</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="route-card" onclick="openRoute('cultural')">
+                        <div class="route-image cultural-bg"></div>
+                        <div class="route-info">
+                            <h4>Культурные объекты</h4>
+                            <p>4.1 км • 75 мин</p>
+                            <div class="route-rewards">
+                                <span class="reward-badge">🎭 Театр</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Статистика -->
+            <section class="stats-section">
+                <h3 class="section-title">📊 Ваша активность</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="routesCompleted">0</div>
+                        <div class="stat-label">Пройдено маршрутов</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="distanceWalked">0</div>
+                        <div class="stat-label">Км пройдено</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="rewardsEarned">0</div>
+                        <div class="stat-label">Наград получено</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Нижнее меню -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" onclick="goHome()">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Главная</span>
+            </button>
+            <button class="nav-btn" onclick="openRoutes()">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Маршруты</span>
+            </button>
+            <button class="nav-btn" onclick="openMap()">
+                <span class="nav-icon">🧭</span>
+                <span class="nav-label">Карта</span>
+            </button>
+            <button class="nav-btn" onclick="openRewards()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Награды</span>
+            </button>
+        </nav>
     </div>
 
-    <script>
-        function openBot() {
-            window.open('https://t.me/your_bot_name', '_blank');
-        }
-        
-        function showFeatures() {
-            const features = document.getElementById('features');
-            features.style.display = features.style.display === 'none' ? 'block' : 'none';
-        }
-    </script>
+    <script src="js/telegram.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
