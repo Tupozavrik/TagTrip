@@ -738,12 +738,8 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-```css
-/* ===== ОСНОВНЫЕ СТИЛИ TAGTRIP ===== */
-/* Адаптировано под дизайн-систему Perplexity */
-
 :root {
-    /* Telegram WebApp интеграция с дизайн-системой */
+    /* Design system integration - keeping Telegram variables for compatibility */
     --tg-theme-bg-color: var(--color-background);
     --tg-theme-secondary-bg-color: var(--color-surface);
     --tg-theme-text-color: var(--color-text);
@@ -753,20 +749,20 @@ select.form-control {
     --tg-theme-button-text-color: var(--color-btn-primary-text);
     --tg-theme-destructive-text-color: var(--color-error);
     
-    /* Размеры приложения */
-    --app-max-width: 375px;
+    /* Layout dimensions */
+    --app-max-width: var(--container-sm);
     --app-padding: var(--space-16);
     --border-radius: var(--radius-lg);
     --border-radius-small: var(--radius-base);
     
-    /* Цвета проекта на основе дизайн-системы */
+    /* Project colors using design system */
     --primary-color: var(--color-primary);
     --accent-color: var(--color-warning);
     --success-color: var(--color-success);
     --warning-color: var(--color-warning);
     --danger-color: var(--color-error);
     
-    /* Тени из дизайн-системы */
+    /* Shadows from design system */
     --shadow-light: var(--shadow-sm);
     --shadow-medium: var(--shadow-md);
 }
@@ -784,12 +780,12 @@ body {
     background-color: var(--color-background);
     color: var(--color-text);
     line-height: var(--line-height-normal);
-    font-size: var(--font-size-base);
     overflow-x: hidden;
+    font-size: var(--font-size-base);
+    /* Используем viewport Telegram */
     max-width: var(--tg-viewport-width, var(--app-max-width));
     margin: 0 auto;
     min-height: var(--tg-viewport-stable-height, 100vh);
-    -webkit-font-smoothing: antialiased;
 }
 
 .app-container {
@@ -801,12 +797,11 @@ body {
 
 /* ===== ШАПКА ===== */
 .app-header {
-    background: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-warning));
     color: var(--color-btn-primary-text);
     padding: var(--space-20) var(--app-padding) var(--space-24);
     text-align: center;
     position: relative;
-    box-shadow: var(--shadow-sm);
 }
 
 .header-content {
@@ -852,15 +847,15 @@ body {
 .welcome-card {
     background: var(--color-surface);
     padding: var(--space-24);
-    border-radius: var(--border-radius);
+    border-radius: var(--radius-lg);
     text-align: center;
-    box-shadow: var(--shadow-light);
+    box-shadow: var(--shadow-sm);
     border: 1px solid var(--color-card-border);
     transition: box-shadow var(--duration-normal) var(--ease-standard);
 }
 
 .welcome-card:hover {
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-md);
 }
 
 .welcome-icon {
@@ -874,6 +869,7 @@ body {
     margin-bottom: var(--space-12);
     color: var(--color-text);
     line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
 }
 
 .welcome-card p {
@@ -897,7 +893,7 @@ body {
     background: var(--color-primary);
     color: var(--color-btn-primary-text);
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--radius-lg);
     padding: var(--space-20) var(--space-16);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-medium);
@@ -908,14 +904,14 @@ body {
     gap: var(--space-8);
     cursor: pointer;
     transition: all var(--duration-normal) var(--ease-standard);
-    box-shadow: var(--shadow-light);
+    box-shadow: var(--shadow-sm);
     min-height: 80px;
     position: relative;
 }
 
 .action-btn:hover {
     background: var(--color-primary-hover);
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-md);
 }
 
 .action-btn:active {
@@ -941,16 +937,16 @@ body {
 
 .route-card {
     background: var(--color-surface);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-lg);
     overflow: hidden;
     cursor: pointer;
     transition: all var(--duration-normal) var(--ease-standard);
-    box-shadow: var(--shadow-light);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-card-border);
 }
 
 .route-card:hover {
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-md);
 }
 
 .route-card:active {
@@ -970,11 +966,11 @@ body {
 }
 
 .parks-bg {
-    background: linear-gradient(45deg, var(--color-teal-700), var(--color-success));
+    background: linear-gradient(45deg, var(--color-teal-700), var(--color-teal-300));
 }
 
 .cultural-bg {
-    background: linear-gradient(45deg, var(--color-slate-900), var(--color-teal-300));
+    background: linear-gradient(45deg, var(--color-slate-900), var(--color-slate-500));
 }
 
 .route-info {
@@ -987,6 +983,7 @@ body {
     margin-bottom: var(--space-4);
     color: var(--color-text);
     line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
 }
 
 .route-info p {
@@ -1021,15 +1018,15 @@ body {
 .stat-item {
     background: var(--color-surface);
     padding: var(--space-16) var(--space-12);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-lg);
     text-align: center;
-    box-shadow: var(--shadow-light);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-card-border);
     transition: box-shadow var(--duration-normal) var(--ease-standard);
 }
 
 .stat-item:hover {
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-number {
@@ -1054,7 +1051,7 @@ body {
     transform: translateX(-50%);
     width: 100%;
     max-width: var(--tg-viewport-width, var(--app-max-width));
-    background: var(--color-surface);
+    background: var(--color-background);
     border-top: 1px solid var(--color-border);
     display: flex;
     padding: var(--space-8) 0;
@@ -1071,7 +1068,7 @@ body {
     align-items: center;
     gap: var(--space-4);
     cursor: pointer;
-    transition: all var(--duration-fast) var(--ease-standard);
+    transition: all var(--duration-normal) var(--ease-standard);
     color: var(--color-text-secondary);
     font-family: var(--font-family-base);
 }
@@ -1090,7 +1087,7 @@ body {
 }
 
 .nav-icon {
-    font-size: var(--space-20);
+    font-size: var(--font-size-xl);
 }
 
 .nav-label {
@@ -1099,8 +1096,8 @@ body {
 }
 
 /* ===== АДАПТИВНОСТЬ ===== */
-/* Маленькие экраны (320px) */
-@media (max-width: 350px) {
+/* Mobile portrait breakpoint as required */
+@media (max-width: 480px) {
     :root {
         --app-padding: var(--space-12);
     }
@@ -1109,17 +1106,38 @@ body {
         font-size: var(--font-size-2xl);
     }
     
+    .app-header {
+        padding: var(--space-16) var(--app-padding) var(--space-20);
+    }
+    
+    .welcome-card {
+        padding: var(--space-20);
+    }
+    
+    .welcome-card h2 {
+        font-size: var(--font-size-xl);
+    }
+    
     .action-btn {
         padding: var(--space-16) var(--space-12);
         min-height: 70px;
+        font-size: var(--font-size-sm);
     }
     
     .btn-icon {
-        font-size: var(--space-20);
+        font-size: var(--font-size-xl);
     }
     
     .route-image {
         height: 100px;
+    }
+    
+    .route-info {
+        padding: var(--space-12);
+    }
+    
+    .route-info h4 {
+        font-size: var(--font-size-base);
     }
     
     .stats-grid {
@@ -1133,6 +1151,43 @@ body {
     
     .stat-number {
         font-size: var(--font-size-xl);
+    }
+    
+    .action-grid {
+        gap: var(--space-8);
+    }
+    
+    .routes-preview {
+        gap: var(--space-8);
+    }
+    
+    .section-title {
+        font-size: var(--font-size-lg);
+        margin: var(--space-20) 0 var(--space-12) 0;
+    }
+}
+
+/* Маленькие экраны (320px) */
+@media (max-width: 350px) {
+    :root {
+        --app-padding: var(--space-10);
+    }
+    
+    .welcome-card {
+        padding: var(--space-16);
+    }
+    
+    .action-btn {
+        padding: var(--space-12) var(--space-8);
+        min-height: 60px;
+    }
+    
+    .stat-item {
+        padding: var(--space-8) var(--space-6);
+    }
+    
+    .route-info {
+        padding: var(--space-10);
     }
 }
 
@@ -1155,133 +1210,27 @@ body {
     .routes-preview {
         gap: var(--space-16);
     }
-}
-
-/* Мобильная адаптация для портретной ориентации (480px) */
-@media (max-width: 480px) {
-    .app-container {
-        min-height: 100dvh;
-    }
-    
-    .app-header {
-        padding: var(--space-16) var(--app-padding) var(--space-20);
-    }
-    
-    .app-title {
-        font-size: var(--font-size-2xl);
-    }
-    
-    .app-subtitle {
-        font-size: var(--font-size-sm);
-    }
-    
-    .main-content {
-        padding: 0 var(--space-12);
-        padding-bottom: 90px;
-    }
-    
-    .section-title {
-        font-size: var(--font-size-lg);
-        margin: var(--space-20) 0 var(--space-12) 0;
-    }
-    
-    .welcome-card {
-        padding: var(--space-20);
-    }
-    
-    .welcome-card h2 {
-        font-size: var(--font-size-xl);
-    }
-    
-    .action-grid {
-        gap: var(--space-10);
-    }
-    
-    .action-btn {
-        padding: var(--space-16) var(--space-10);
-        min-height: 75px;
-        font-size: var(--font-size-sm);
-    }
-    
-    .btn-icon {
-        font-size: var(--space-20);
-    }
-    
-    .route-card {
-        margin-bottom: var(--space-8);
-    }
-    
-    .route-image {
-        height: 100px;
-    }
-    
-    .route-info {
-        padding: var(--space-12);
-    }
-    
-    .route-info h4 {
-        font-size: var(--font-size-md);
-    }
     
     .stats-grid {
-        gap: var(--space-8);
-    }
-    
-    .stat-item {
-        padding: var(--space-12) var(--space-8);
-    }
-    
-    .stat-number {
-        font-size: var(--font-size-xl);
-    }
-    
-    .stat-label {
-        font-size: var(--font-size-xs);
-    }
-    
-    .bottom-nav {
-        padding: var(--space-6) 0;
-    }
-    
-    .nav-btn {
-        padding: var(--space-6) var(--space-2);
-    }
-    
-    .nav-icon {
-        font-size: var(--font-size-lg);
-    }
-    
-    .nav-label {
-        font-size: 9px;
+        gap: var(--space-16);
     }
 }
 
-/* Очень маленькие экраны */
-@media (max-width: 320px) {
+/* Medium screens */
+@media (min-width: 640px) {
     .main-content {
-        padding: 0 var(--space-8);
-        padding-bottom: 85px;
+        max-width: var(--container-md);
+        margin: 0 auto;
+        padding-left: var(--space-24);
+        padding-right: var(--space-24);
     }
     
     .app-header {
-        padding: var(--space-12) var(--space-8) var(--space-16);
-    }
-    
-    .welcome-card {
-        padding: var(--space-16);
+        padding-left: var(--space-24);
+        padding-right: var(--space-24);
     }
     
     .action-grid {
-        gap: var(--space-8);
-    }
-    
-    .action-btn {
-        padding: var(--space-12);
-        min-height: 65px;
-    }
-    
-    .stats-grid {
-        gap: var(--space-6);
+        grid-template-columns: repeat(4, 1fr);
     }
 }
-```
