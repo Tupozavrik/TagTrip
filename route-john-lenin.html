@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Маршрут: Джон Ленин - TagTrip</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Leaflet CSS для карты -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="tagtrip-styles.css">
+    <link rel="stylesheet" href="themes.css">
+    
+    <style>
+        /* Специальные стили для страницы карты */
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 120px);
+            max-width: var(--tg-viewport-width, 375px);
+            margin: 0 auto;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .route-header {
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            color: white;
+            padding: 16px;
+            margin: 0;
+        }
+        
+        .route-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .route-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+        }
+        
+        .route-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .control-buttons {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 0 16px;
+            max-width: var(--tg-viewport-width, 375px);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .control-btn {
+            flex: 1;
+            background: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .control-btn.secondary {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            color: var(--tg-theme-text-color, #000000);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .start-btn {
+            background: var(--success-color, #4CAF50);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4); }
+            50% { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.8); }
+            100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4); }
+        }
+        
+        /* Адаптивность для маленьких экранов */
+        @media (max-width: 350px) {
+            .route-stats {
+                gap: 12px;
+                font-size: 13px;
+            }
+            
+            .control-btn {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Шапка маршрута -->
+        <header class="route-header">
+            <div class="route-info">
+                <div>
+                    <h1>🏛️ Джон Ленин</h1>
+                    <p style="margin: 0; opacity: 0.9; font-size: 14px;">Исторические места Омска</p>
+                </div>
+                <div class="route-stats">
+                    <div class="route-stat">
+                        <span>📏</span>
+                        <span>2.5 км</span>
+                    </div>
+                    <div class="route-stat">
+                        <span>⏱️</span>
+                        <span>45 мин</span>
+                    </div>
+                    <div class="route-stat">
+                        <span>🟢</span>
+                        <span>Легкий</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Контейнер карты -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="control-buttons">
+            <button class="control-btn secondary" onclick="goBack()">
+                🔙 Назад
+            </button>
+            <button class="control-btn start-btn" onclick="startRoute()">
+                🚀 Начать маршрут
+            </button>
+        </div>
+
+        <!-- Нижнее меню -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" onclick="goHome()">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Главная</span>
+            </button>
+            <button class="nav-btn" onclick="openRoutes()">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Маршруты</span>
+            </button>
+            <button class="nav-btn active" onclick="openMap()">
+                <span class="nav-icon">🧭</span>
+                <span class="nav-label">Карта</span>
+            </button>
+            <button class="nav-btn" onclick="openRewards()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Награды</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Интеграция с Telegram -->
+    <script src="telegram.js"></script>
+    
+    <script>
+        // Инициализация карты
+        let map;
+        let routeLayer;
+        let userMarker;
+        let routeStarted = false;
+        
+        // Координаты маршрута "Джон Ленин"
+        const routeData = {
+            id: 'historical',
+            name: 'Джон Ленин',
+            points: [
+                {
+                    name: 'Омская крепость',
+                    lat: 54.9924,
+                    lon: 73.3686,
+                    description: 'Историческое сердце Омска, основанное в 1716 году'
+                },
+                {
+                    name: 'Успенский собор', 
+                    lat: 54.9889,
+                    lon: 73.3745,
+                    description: 'Главный православный храм города, восстановленный в 2007 году'
+                },
+                {
+                    name: 'Драматический театр',
+                    lat: 54.9876,
+                    lon: 73.3712,
+                    description: 'Старейший театр Сибири, основанный в 1874 году'
+                },
+                {
+                    name: 'Литературный музей им. Ф.М. Достоевского',
+                    lat: 54.9901,
+                    lon: 73.3678,
+                    description: 'Музей, посвященный пребыванию писателя в Омске'
+                }
+            ]
+        };
+        
+        function initMap() {
+            // Создаем карту с центром в Омске
+            map = L.map('map').setView([54.9924, 73.3686], 14);
+            
+            // Добавляем тайлы OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Создаем маршрут
+            createRouteOnMap();
+            
+            // Запрашиваем геолокацию пользователя
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    updateUserPosition,
+                    handleLocationError,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            }
+        }
+        
+        function createRouteOnMap() {
+            // Координаты для линии маршрута
+            const routeCoordinates = routeData.points.map(point => [point.lat, point.lon]);
+            
+            // Создаем линию маршрута
+            routeLayer = L.polyline(routeCoordinates, {
+                color: '#8B4513',
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+            
+            // Добавляем маркеры для каждой точки
+            routeData.points.forEach((point, index) => {
+                const isStart = index === 0;
+                const isEnd = index === routeData.points.length - 1;
+                
+                let iconHtml = '';
+                let className = 'route-marker';
+                
+                if (isStart) {
+                    iconHtml = '🚩';
+                    className += ' start-marker';
+                } else if (isEnd) {
+                    iconHtml = '🏁';  
+                    className += ' end-marker';
+                } else {
+                    iconHtml = '📍';
+                }
+                
+                const customIcon = L.divIcon({
+                    html: `<div class="${className}">${iconHtml}</div>`,
+                    className: 'custom-div-icon',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+                
+                const marker = L.marker([point.lat, point.lon], { icon: customIcon })
+                    .addTo(map)
+                    .bindPopup(`
+                        <div class="marker-popup">
+                            <h3>${point.name}</h3>
+                            <p>${point.description}</p>
+                            ${!isEnd ? '<small>Следующая точка маршрута</small>' : '<small><strong>Финиш маршрута!</strong></small>'}
+                        </div>
+                    `);
+            });
+            
+            // Подгоняем карту под маршрут
+            map.fitBounds(routeLayer.getBounds(), { padding: [20, 20] });
+        }
+        
+        function updateUserPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            // Обновляем или создаем маркер пользователя
+            if (userMarker) {
+                userMarker.setLatLng([lat, lon]);
+            } else {
+                const userIcon = L.divIcon({
+                    html: '<div class="user-marker">👤</div>',
+                    className: 'custom-div-icon',
+                    iconSize: [25, 25],
+                    iconAnchor: [12.5, 12.5]
+                });
+                
+                userMarker = L.marker([lat, lon], { icon: userIcon })
+                    .addTo(map)
+                    .bindPopup('Ваше местоположение');
+                
+                // Добавляем круг точности
+                L.circle([lat, lon], {
+                    radius: accuracy,
+                    color: '#4CAF50',
+                    fillColor: '#4CAF50',
+                    fillOpacity: 0.2,
+                    weight: 2
+                }).addTo(map);
+            }
+            
+            // Проверяем близость к точкам маршрута (если маршрут начат)
+            if (routeStarted) {
+                checkRouteProgress(lat, lon);
+            }
+        }
+        
+        function handleLocationError(error) {
+            console.warn('Ошибка геолокации:', error);
+            if (window.telegramApp) {
+                window.telegramApp.showAlert('Не удалось получить ваше местоположение. Проверьте разрешения.');
+            }
+        }
+        
+        function checkRouteProgress(userLat, userLon) {
+            // Проверяем расстояние до каждой точки маршрута
+            routeData.points.forEach((point, index) => {
+                const distance = calculateDistance(userLat, userLon, point.lat, point.lon);
+                
+                // Если пользователь в радиусе 100 метров от точки
+                if (distance < 0.1) {
+                    // Отмечаем точку как посещенную
+                    if (window.telegramApp) {
+                        window.telegramApp.hapticFeedback('success');
+                        window.telegramApp.showAlert(`✅ Вы достигли точки: ${point.name}!`);
+                    }
+                }
+            });
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Радиус Земли в км
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function startRoute() {
+            routeStarted = true;
+            
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('medium');
+                window.telegramApp.showAlert('🚀 Маршрут начат! Следуйте к первой точке.');
+            }
+            
+            // Изменяем кнопку
+            const startBtn = document.querySelector('.start-btn');
+            if (startBtn) {
+                startBtn.innerHTML = '⏸️ Остановить';
+                startBtn.onclick = stopRoute;
+                startBtn.classList.remove('start-btn');
+                startBtn.classList.add('stop-btn');
+            }
+            
+            // Центрируем карту на пользователе (если доступно)
+            if (userMarker) {
+                map.setView(userMarker.getLatLng(), 16);
+            }
+        }
+        
+        function stopRoute() {
+            routeStarted = false;
+            
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+            
+            // Возвращаем кнопку в исходное состояние
+            const stopBtn = document.querySelector('.stop-btn');
+            if (stopBtn) {
+                stopBtn.innerHTML = '🚀 Начать маршрут';
+                stopBtn.onclick = startRoute;
+                stopBtn.classList.remove('stop-btn');
+                stopBtn.classList.add('start-btn');
+            }
+        }
+        
+        function goBack() {
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+                window.telegramApp.goBack();
+            } else {
+                window.history.back();
+            }
+        }
+        
+        // Навигационные функции
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+        
+        function openRoutes() {
+            window.location.href = 'routes.html';
+        }
+        
+        function openMap() {
+            // Уже на странице карты
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+        }
+        
+        function openRewards() {
+            window.location.href = 'rewards.html';
+        }
+        
+        // Стили для маркеров
+        const style = document.createElement('style');
+        style.textContent = `
+            .route-marker {
+                background: white;
+                border: 2px solid #8B4513;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+            
+            .start-marker {
+                border-color: #4CAF50;
+                background: #E8F5E8;
+            }
+            
+            .end-marker {
+                border-color: #f44336;
+                background: #FFEBEE;
+            }
+            
+            .user-marker {
+                background: #2196F3;
+                color: white;
+                border-radius: 50%;
+                width: 25px;
+                height: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(33, 150, 243, 0.5);
+                animation: userPulse 2s infinite;
+            }
+            
+            @keyframes userPulse {
+                0% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.5); }
+                50% { box-shadow: 0 4px 16px rgba(33, 150, 243, 0.8); }
+                100% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.5); }
+            }
+            
+            .marker-popup h3 {
+                margin: 0 0 8px 0;
+                color: #333;
+                font-size: 16px;
+            }
+            
+            .marker-popup p {
+                margin: 0 0 8px 0;
+                font-size: 14px;
+                color: #666;
+            }
+            
+            .marker-popup small {
+                color: #888;
+                font-size: 12px;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+        });
+    </script>
+</body>
+</html>

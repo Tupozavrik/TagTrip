@@ -1,4 +1,4 @@
-// ===== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ TAGTRIP =====
+// ===== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ TAGTRIP С ИНТЕГРАЦИЕЙ КАРТЫ =====
 
 class TagTripApp {
     constructor() {
@@ -20,6 +20,7 @@ class TagTripApp {
     getCurrentPageName() {
         const path = window.location.pathname;
         if (path.includes('routes.html')) return 'routes';
+        if (path.includes('route-john-lenin.html')) return 'route-map';
         if (path.includes('map.html')) return 'map';
         if (path.includes('rewards.html')) return 'rewards';
         return 'home';
@@ -46,7 +47,9 @@ class TagTripApp {
             distanceWalked: 0,
             rewardsEarned: 0,
             visitedPlaces: [],
-            completedRoutes: []
+            completedRoutes: [],
+            currentRoute: null,
+            routeStartTime: null
         };
     }
 
@@ -65,15 +68,17 @@ class TagTripApp {
     }
 
     loadRoutes() {
-        // Демо данные маршрутов Омска
+        // Обновленные данные маршрутов с поддержкой карт
         this.routes = [
             {
                 id: 'historical',
-                name: 'Исторический центр',
+                name: 'Джон Ленин',
                 description: 'Прогулка по главным историческим местам Омска',
                 distance: 2.5,
                 duration: 45,
                 difficulty: 'easy',
+                hasMap: true, // Карта доступна
+                mapUrl: 'route-john-lenin.html',
                 points: [
                     {
                         name: 'Омская крепость',
@@ -92,6 +97,12 @@ class TagTripApp {
                         lat: 54.9876,
                         lon: 73.3712,
                         description: 'Старейший театр Сибири'
+                    },
+                    {
+                        name: 'Литературный музей им. Ф.М. Достоевского',
+                        lat: 54.9901,
+                        lon: 73.3678,
+                        description: 'Музей, посвященный пребыванию писателя в Омске'
                     }
                 ],
                 rewards: [
@@ -99,17 +110,18 @@ class TagTripApp {
                         type: 'coffee',
                         partner: 'Кофейня "Центральная"',
                         discount: 15,
-                        code: 'HISTORY15'
+                        code: 'JOHNLENIN15'
                     }
                 ]
             },
             {
                 id: 'parks',
-                name: 'Парки и скверы',
+                name: 'Старая Роща',
                 description: 'Зеленые зоны и места для отдыха',
                 distance: 3.2,
                 duration: 60,
                 difficulty: 'medium',
+                hasMap: false, // Карта пока не готова
                 points: [
                     {
                         name: 'Парк им. 30-летия ВЛКСМ',
@@ -122,12 +134,6 @@ class TagTripApp {
                         lat: 54.9854,
                         lon: 73.3298,
                         description: 'Мемориальный комплекс'
-                    },
-                    {
-                        name: 'Сквер им. Дзержинского',
-                        lat: 54.9923,
-                        lon: 73.3456,
-                        description: 'Уютный сквер в центре города'
                     }
                 ],
                 rewards: [
@@ -141,11 +147,12 @@ class TagTripApp {
             },
             {
                 id: 'cultural',
-                name: 'Культурные объекты',
+                name: 'Шаги по Омке',
                 description: 'Музеи, театры и культурные центры',
                 distance: 4.1,
                 duration: 75,
                 difficulty: 'medium',
+                hasMap: false, // Карта пока не готова
                 points: [
                     {
                         name: 'Музыкальный театр',
@@ -158,12 +165,6 @@ class TagTripApp {
                         lat: 54.9901,
                         lon: 73.3678,
                         description: 'История Омского Прииртышья'
-                    },
-                    {
-                        name: 'Концертный зал',
-                        lat: 54.9856,
-                        lon: 73.3734,
-                        description: 'Омская филармония'
                     }
                 ],
                 rewards: [
@@ -186,7 +187,7 @@ class TagTripApp {
             }
         });
 
-        // Обработка свайпов (для будущего функционала)
+        // Обработка свайпов
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -205,13 +206,7 @@ class TagTripApp {
         const diff = touchStartX - touchEndX;
 
         if (Math.abs(diff) > swipeThreshold) {
-            if (diff > 0) {
-                // Свайп влево
-                this.hapticFeedback('light');
-            } else {
-                // Свайп вправо
-                this.hapticFeedback('light');
-            }
+            this.hapticFeedback('light');
         }
     }
 
@@ -226,6 +221,7 @@ class TagTripApp {
         switch (this.currentPage) {
             case 'home': activeIndex = 0; break;
             case 'routes': activeIndex = 1; break;
+            case 'route-map':
             case 'map': activeIndex = 2; break;
             case 'rewards': activeIndex = 3; break;
         }
@@ -243,7 +239,21 @@ class TagTripApp {
 
     openMap() {
         this.hapticFeedback('medium');
-        this.navigate('map.html');
+        // Если есть активный маршрут, открываем его карту
+        if (this.userStats.currentRoute) {
+            const route = this.routes.find(r => r.id === this.userStats.currentRoute);
+            if (route && route.hasMap) {
+                this.navigate(route.mapUrl);
+                return;
+            }
+        }
+        // Иначе открываем карту первого доступного маршрута
+        const routeWithMap = this.routes.find(r => r.hasMap);
+        if (routeWithMap) {
+            this.navigate(routeWithMap.mapUrl);
+        } else {
+            this.showAlert('🗺️ Карты маршрутов скоро будут доступны!');
+        }
     }
 
     openRewards() {
@@ -253,7 +263,6 @@ class TagTripApp {
 
     openProfile() {
         this.hapticFeedback('medium');
-        // Пока просто показываем статистику
         this.showUserProfile();
     }
 
@@ -266,8 +275,14 @@ class TagTripApp {
         this.hapticFeedback('medium');
         const route = this.routes.find(r => r.id === routeId);
         if (route) {
-            localStorage.setItem('selectedRoute', JSON.stringify(route));
-            this.navigate(`route-details.html?id=${routeId}`);
+            if (route.hasMap) {
+                // Если карта доступна, открываем её
+                localStorage.setItem('selectedRoute', JSON.stringify(route));
+                this.navigate(route.mapUrl);
+            } else {
+                // Иначе показываем уведомление
+                this.showAlert(`🔜 Карта маршрута "${route.name}" скоро будет готова!`);
+            }
         }
     }
 
@@ -278,10 +293,105 @@ class TagTripApp {
         window.location.href = page;
     }
 
+    // Методы для работы с маршрутами
+    startRoute(routeId) {
+        const route = this.routes.find(r => r.id === routeId);
+        if (!route) return;
+
+        this.userStats.currentRoute = routeId;
+        this.userStats.routeStartTime = new Date().toISOString();
+        this.saveUserStats();
+        
+        this.hapticFeedback('success');
+        this.showAlert(`🚀 Начат маршрут "${route.name}"! Следуйте к первой точке.`);
+    }
+
+    stopRoute() {
+        this.userStats.currentRoute = null;
+        this.userStats.routeStartTime = null;
+        this.saveUserStats();
+        
+        this.hapticFeedback('light');
+        this.showAlert('⏸️ Маршрут остановлен.');
+    }
+
+    completeRoute(routeId) {
+        const route = this.routes.find(r => r.id === routeId);
+        if (!route) return;
+
+        // Обновляем статистику
+        this.userStats.routesCompleted++;
+        this.userStats.distanceWalked += route.distance;
+        
+        if (!this.userStats.completedRoutes.includes(routeId)) {
+            this.userStats.completedRoutes.push(routeId);
+        }
+
+        // Сбрасываем текущий маршрут
+        this.userStats.currentRoute = null;
+        this.userStats.routeStartTime = null;
+
+        // Разблокируем награды
+        this.unlockReward(routeId);
+
+        this.saveUserStats();
+        this.updateStats();
+        
+        this.hapticFeedback('success');
+        this.showAlert(`🎉 Поздравляем! Маршрут "${route.name}" завершен!`);
+    }
+
+    checkRouteProgress(userLat, userLon) {
+        if (!this.userStats.currentRoute) return;
+
+        const route = this.routes.find(r => r.id === this.userStats.currentRoute);
+        if (!route) return;
+
+        // Проверяем близость к точкам маршрута
+        route.points.forEach((point, index) => {
+            const distance = this.calculateDistance(userLat, userLon, point.lat, point.lon);
+            
+            // Если пользователь в радиусе 100 метров от точки
+            if (distance < 0.1 && !this.userStats.visitedPlaces.includes(`${route.id}_${index}`)) {
+                // Отмечаем точку как посещенную
+                this.userStats.visitedPlaces.push(`${route.id}_${index}`);
+                this.saveUserStats();
+                
+                this.hapticFeedback('success');
+                this.showAlert(`✅ Точка достигнута: ${point.name}!`);
+
+                // Проверяем, все ли точки посещены
+                const visitedCount = this.userStats.visitedPlaces.filter(p => p.startsWith(route.id)).length;
+                if (visitedCount >= route.points.length) {
+                    setTimeout(() => this.completeRoute(route.id), 1000);
+                }
+            }
+        });
+    }
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Радиус Земли в км
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
     // Вспомогательные методы
     hapticFeedback(type = 'light') {
         if (window.telegramApp) {
             window.telegramApp.hapticFeedback(type);
+        }
+    }
+
+    showAlert(message) {
+        if (window.telegramApp) {
+            window.telegramApp.showAlert(message);
+        } else {
+            alert(message);
         }
     }
 
@@ -293,15 +403,12 @@ class TagTripApp {
 👤 ${user.first_name}
 📊 Статистика:
 🚶‍♂️ Маршрутов пройдено: ${stats.routesCompleted}
-📏 Расстояние: ${stats.distanceWalked} км
+📏 Расстояние: ${stats.distanceWalked.toFixed(1)} км
 🎁 Наград получено: ${stats.rewardsEarned}
+${stats.currentRoute ? `\n🗺️ Текущий маршрут: ${this.routes.find(r => r.id === stats.currentRoute)?.name || 'Неизвестный'}` : ''}
         `.trim();
 
-        if (window.telegramApp) {
-            window.telegramApp.showAlert(message);
-        } else {
-            alert(message);
-        }
+        this.showAlert(message);
     }
 
     // Работа с наградами
@@ -329,26 +436,7 @@ class TagTripApp {
         this.hapticFeedback('success');
     }
 
-    completeRoute(routeId) {
-        const route = this.routes.find(r => r.id === routeId);
-        if (!route) return;
-
-        // Обновляем статистику
-        this.userStats.routesCompleted++;
-        this.userStats.distanceWalked += route.distance;
-        
-        if (!this.userStats.completedRoutes.includes(routeId)) {
-            this.userStats.completedRoutes.push(routeId);
-        }
-
-        // Разблокируем награды
-        this.unlockReward(routeId);
-
-        this.saveUserStats();
-        this.updateStats();
-    }
-
-    // Геолокация (заглушка для будущего функционала)
+    // Геолокация
     getCurrentLocation() {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
@@ -360,7 +448,8 @@ class TagTripApp {
                 position => {
                     resolve({
                         lat: position.coords.latitude,
-                        lon: position.coords.longitude
+                        lon: position.coords.longitude,
+                        accuracy: position.coords.accuracy
                     });
                 },
                 error => reject(error),
@@ -402,4 +491,12 @@ function goHome() {
 
 function openRoute(routeId) {
     if (window.tagTripApp) window.tagTripApp.openRoute(routeId);
+}
+
+function startRoute(routeId) {
+    if (window.tagTripApp) window.tagTripApp.startRoute(routeId);
+}
+
+function stopRoute() {
+    if (window.tagTripApp) window.tagTripApp.stopRoute();
 }
