@@ -5,15 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мои награды - TagTrip</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="tagtrip-styles.css">
-    <link rel="stylesheet" href="themes.css">
     
-    <!-- QR Code Library - обновленная версия -->
+    <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     
     <style>
+        /* ===== БАЗОВЫЕ СТИЛИ ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: var(--tg-viewport-width, 375px);
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+        }
+        
+        /* ===== ШАПКА СТРАНИЦЫ ===== */
         .rewards-header {
-            background: linear-gradient(135deg, var(--accent-color, #FF9800), var(--primary-color, #4CAF50));
+            background: linear-gradient(135deg, #FF9800, #4CAF50);
             color: white;
             padding: 16px;
             text-align: center;
@@ -31,6 +52,12 @@
             font-size: 14px;
         }
         
+        /* ===== ГЛАВНЫЙ КОНТЕНТ С ОТСТУПОМ ===== */
+        .main-content {
+            padding-bottom: 100px; /* ИСПРАВЛЕНО: отступ снизу для нижней панели */
+        }
+        
+        /* ===== СТАТИСТИКА ===== */
         .stats-section {
             padding: 16px;
             background: var(--tg-theme-secondary-bg-color, #f8f8f8);
@@ -46,15 +73,15 @@
         .stat-card {
             background: var(--tg-theme-bg-color, #ffffff);
             padding: 16px 12px;
-            border-radius: var(--border-radius, 12px);
+            border-radius: 12px;
             text-align: center;
-            box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.1));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .stat-number {
             font-size: 24px;
             font-weight: 700;
-            color: var(--primary-color, #4CAF50);
+            color: #4CAF50;
             margin-bottom: 4px;
         }
         
@@ -64,23 +91,25 @@
             line-height: 1.2;
         }
         
+        /* ===== СПИСОК НАГРАД ===== */
         .rewards-list {
             padding: 0 16px;
+            margin-bottom: 24px; /* ДОБАВЛЕН отступ между секциями */
         }
         
         .reward-card {
             background: var(--tg-theme-bg-color, #ffffff);
-            border-radius: var(--border-radius, 12px);
+            border-radius: 12px;
             padding: 16px;
             margin-bottom: 12px;
-            box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.1));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .reward-card:active {
             transform: scale(0.98);
-            box-shadow: var(--shadow-medium, 0 4px 12px rgba(0, 0, 0, 0.15));
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .reward-card.test {
@@ -106,7 +135,7 @@
             font-family: 'Courier New', monospace;
             font-size: 14px;
             font-weight: 700;
-            color: var(--primary-color, #4CAF50);
+            color: #4CAF50;
             background: var(--tg-theme-secondary-bg-color, #f8f8f8);
             padding: 4px 8px;
             border-radius: 6px;
@@ -119,7 +148,7 @@
         }
         
         .reward-discount {
-            background: var(--accent-color, #FF9800);
+            background: #FF9800;
             color: white;
             padding: 4px 12px;
             border-radius: 16px;
@@ -194,12 +223,13 @@
             opacity: 0.9;
         }
         
+        /* ===== ИНСТРУКЦИИ ===== */
         .instructions {
-            margin: 20px 16px;
+            margin: 20px 16px 32px 16px; /* УВЕЛИЧЕН нижний отступ */
             padding: 16px;
             background: var(--tg-theme-secondary-bg-color, #f8f8f8);
-            border-radius: var(--border-radius, 12px);
-            border-left: 4px solid var(--primary-color, #4CAF50);
+            border-radius: 12px;
+            border-left: 4px solid #4CAF50;
         }
         
         .instructions h3 {
@@ -222,6 +252,7 @@
             margin-top: 12px;
         }
         
+        /* ===== ПУСТОЕ СОСТОЯНИЕ ===== */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -248,11 +279,11 @@
         }
         
         .empty-action {
-            background: var(--primary-color, #4CAF50);
+            background: #4CAF50;
             color: white;
             padding: 12px 24px;
             border: none;
-            border-radius: var(--border-radius, 12px);
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -263,7 +294,7 @@
             transform: scale(0.95);
         }
         
-        /* QR Code Modal */
+        /* ===== QR MODAL ===== */
         .qr-modal {
             position: fixed;
             top: 0;
@@ -284,7 +315,7 @@
         
         .qr-modal-content {
             background: var(--tg-theme-bg-color, #ffffff);
-            border-radius: var(--border-radius, 12px);
+            border-radius: 12px;
             padding: 24px;
             text-align: center;
             max-width: 300px;
@@ -349,10 +380,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: var(--success-color, #4CAF50);
+            background: #4CAF50;
             color: white;
             padding: 12px 20px;
-            border-radius: var(--border-radius, 12px);
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 500;
             z-index: 3000;
@@ -364,7 +395,7 @@
             opacity: 1;
         }
         
-        /* Нижнее меню */
+        /* ===== НИЖНЕЕ МЕНЮ ===== */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -378,6 +409,7 @@
             padding: 8px 0;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
             z-index: 1000;
+            height: 64px; /* ФИКСИРОВАННАЯ высота */
         }
         
         .nav-btn {
@@ -411,7 +443,17 @@
             font-weight: 500;
         }
         
+        /* ===== ДОПОЛНИТЕЛЬНОЕ ПРОСТРАНСТВО ===== */
+        .content-spacer {
+            height: 20px; /* Дополнительное пространство перед нижней панелью */
+        }
+        
+        /* ===== АДАПТИВНОСТЬ ===== */
         @media (max-width: 350px) {
+            .main-content {
+                padding-bottom: 90px; /* АДАПТИВНЫЙ отступ для маленьких экранов */
+            }
+            
             .stats-grid {
                 gap: 8px;
             }
@@ -427,6 +469,47 @@
             .rewards-list {
                 padding: 0 12px;
             }
+            
+            .bottom-nav {
+                height: 60px; /* Меньшая высота на маленьких экранах */
+            }
+        }
+        
+        /* ===== БЕЗОПАСНАЯ ЗОНА ДЛЯ iOS ===== */
+        @supports (padding: max(0px)) {
+            .bottom-nav {
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+                height: calc(64px + env(safe-area-inset-bottom));
+            }
+            
+            .main-content {
+                padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* ===== ТЕМНАЯ ТЕМА ===== */
+        [data-theme="dark"] {
+            --tg-theme-bg-color: #1a1a1a;
+            --tg-theme-secondary-bg-color: #2a2a2a;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #888888;
+            --tg-theme-button-color: #40a7e3;
+        }
+        
+        [data-theme="dark"] .reward-card,
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .instructions {
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .reward-code,
+        [data-theme="dark"] .qr-btn {
+            background: #333333;
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .bottom-nav {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -438,28 +521,28 @@
             <p>Ваши промокоды и достижения</p>
         </header>
 
-        <!-- Статистика -->
-        <section class="stats-section">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalRewards">1</div>
-                    <div class="stat-label">Всего наград</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="usedRewards">0</div>
-                    <div class="stat-label">Использовано</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="savedMoney">10₽</div>
-                    <div class="stat-label">Сэкономлено</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Основной контент -->
+        <!-- Основной контент с отступом снизу -->
         <main class="main-content">
+            <!-- Статистика -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalRewards">1</div>
+                        <div class="stat-label">Всего наград</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="usedRewards">0</div>
+                        <div class="stat-label">Использовано</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="savedMoney">10₽</div>
+                        <div class="stat-label">Сэкономлено</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Список наград -->
-            <div class="rewards-list" id="rewardsList">
+            <section class="rewards-list" id="rewardsList">
                 <!-- ТЕСТОВЫЙ ПРОМОКОД (всегда показывается первым) -->
                 <div class="reward-card test">
                     <div class="reward-header">
@@ -489,20 +572,23 @@
                 <div id="dynamicRewards">
                     <!-- Заработанные награды появятся здесь -->
                 </div>
-            </div>
-        </main>
+            </section>
 
-        <!-- Инструкция по использованию -->
-        <section class="instructions">
-            <h3>💡 Как использовать промокоды</h3>
-            <p><strong>1.</strong> Назовите код или покажите QR-код на кассе</p>
-            <p><strong>2.</strong> Получите скидку на покупку</p>
-            <p><strong>3.</strong> Наслаждайтесь экономией!</p>
-            <p><strong>🧪 Тестовый промокод</strong> дается всем пользователям для демонстрации функций.</p>
-            <div class="contact">
-                📞 По вопросам: <a href="https://t.me/zxcwed" style="color: var(--tg-theme-link-color, #2481cc);">@zxcwed</a>
-            </div>
-        </section>
+            <!-- Инструкция по использованию -->
+            <section class="instructions">
+                <h3>💡 Как использовать промокоды</h3>
+                <p><strong>1.</strong> Назовите код или покажите QR-код на кассе</p>
+                <p><strong>2.</strong> Получите скидку на покупку</p>
+                <p><strong>3.</strong> Наслаждайтесь экономией!</p>
+                <p><strong>🧪 Тестовый промокод</strong> дается всем пользователям для демонстрации функций.</p>
+                <div class="contact">
+                    📞 По вопросам: <a href="https://t.me/zxcwed" style="color: var(--tg-theme-link-color, #2481cc);">@zxcwed</a>
+                </div>
+            </section>
+
+            <!-- Дополнительное пространство перед нижней панелью -->
+            <div class="content-spacer"></div>
+        </main>
 
         <!-- Нижнее меню -->
         <nav class="bottom-nav">
@@ -545,7 +631,6 @@
         ✅ Промокод скопирован!
     </div>
 
-    <script src="telegram.js"></script>
     <script>
         // Глобальные переменные
         let currentModal = null;
@@ -686,8 +771,8 @@
         function handleCopyCode(code) {
             console.log('Копирование кода:', code);
             
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
             
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -754,8 +839,8 @@
         function handleShowQR(code) {
             console.log('Показ QR для кода:', code);
             
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('medium');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
             }
             
             const modal = document.getElementById('qrModal');
@@ -826,8 +911,8 @@
                 currentModal = null;
                 document.body.style.overflow = '';
                 
-                if (window.telegramApp) {
-                    window.telegramApp.hapticFeedback('light');
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
             }
         }
@@ -841,29 +926,29 @@
 
         // Навигационные функции
         function goHome() {
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
             window.location.href = 'index.html';
         }
 
         function openRoutes() {
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
             window.location.href = 'routes.html';
         }
 
         function openMap() {
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
             window.location.href = 'route-john-lenin.html';
         }
 
         function openRewards() {
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
         }
 
@@ -880,23 +965,22 @@
                 console.error('Ошибка инициализации RewardsManager:', error);
             }
             
-            // Применяем темную тему если нужно
-            if (window.telegramApp && window.telegramApp.tg && window.telegramApp.tg.colorScheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-                console.log('Применена темная тема');
+            // Инициализируем Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                
+                // Применяем тему Telegram
+                if (window.Telegram.WebApp.colorScheme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                }
+                
+                console.log('Telegram WebApp инициализирован');
             }
         });
 
         // Отладочная информация
         console.log('Скрипт rewards загружен');
-        
-        // Проверяем доступность функций при загрузке
-        setTimeout(() => {
-            console.log('Проверка функций через 1 секунду...');
-            console.log('handleShowQR доступна:', typeof handleShowQR === 'function');
-            console.log('handleCopyCode доступна:', typeof handleCopyCode === 'function');
-            console.log('QR Modal найден:', !!document.getElementById('qrModal'));
-        }, 1000);
     </script>
 </body>
 </html>
