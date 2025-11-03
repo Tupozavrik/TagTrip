@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Telegram Бот</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        button {
+            background: #0088cc;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0077bb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Мой Telegram Бот</h1>
+        <p>Добро пожаловать на официальную страницу моего бота!</p>
+        
+        <button onclick="openBot()">Открыть бота</button>
+        <button onclick="showFeatures()">Возможности</button>
+        
+        <div id="features" style="display:none; margin-top: 20px;">
+            <h3>Функции бота:</h3>
+            <ul style="text-align: left;">
+                <li>📝 Ответы на команды</li>
+                <li>🌐 Веб-приложения</li>
+                <li>💬 Интерактивные кнопки</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function openBot() {
+            window.open('https://t.me/your_bot_name', '_blank');
+        }
+        
+        function showFeatures() {
+            const features = document.getElementById('features');
+            features.style.display = features.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
