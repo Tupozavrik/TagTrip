@@ -5,8 +5,339 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TagTrip - Маршруты по Омску</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/themes.css">
+    
+    <style>
+        /* ===== БАЗОВЫЕ СТИЛИ ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: var(--tg-viewport-width, 375px);
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+        }
+        
+        /* ===== ШАПКА ПРИЛОЖЕНИЯ ===== */
+        .app-header {
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            color: white;
+            text-align: center;
+            padding: 20px 16px;
+        }
+        
+        .header-content {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .app-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .app-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+        .main-content {
+            padding: 16px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        /* ===== ПРИВЕТСТВЕННЫЙ БЛОК ===== */
+        .welcome-section {
+            margin-bottom: 24px;
+        }
+        
+        .welcome-card {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .welcome-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .welcome-card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .welcome-card p {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            line-height: 1.5;
+        }
+        
+        /* ===== БЫСТРЫЕ ДЕЙСТВИЯ ===== */
+        .quick-actions {
+            margin-bottom: 24px;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .action-btn {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border: 2px solid var(--tg-theme-button-color, #40a7e3);
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .action-btn:active {
+            transform: scale(0.96);
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+        }
+        
+        .btn-icon {
+            font-size: 24px;
+        }
+        
+        .action-btn span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* ===== ПОПУЛЯРНЫЕ МАРШРУТЫ ===== */
+        .popular-routes {
+            margin-bottom: 24px;
+        }
+        
+        .routes-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .route-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .route-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .route-image {
+            height: 120px;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+        
+        .historical-bg {
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+        }
+        
+        .historical-bg::before {
+            content: '🏛️';
+        }
+        
+        .parks-bg {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        }
+        
+        .parks-bg::before {
+            content: '🌳';
+        }
+        
+        .cultural-bg {
+            background: linear-gradient(135deg, #9C27B0, #E91E63);
+        }
+        
+        .cultural-bg::before {
+            content: '🎭';
+        }
+        
+        .route-info {
+            padding: 16px;
+        }
+        
+        .route-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .route-info p {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 8px;
+        }
+        
+        .route-rewards {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .reward-badge {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .route-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .route-status.new {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .route-status.coming {
+            background: #FFC107;
+            color: #333;
+        }
+        
+        /* ===== СТАТИСТИКА ===== */
+        .stats-section {
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-item {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color, #40a7e3);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #999999);
+            line-height: 1.2;
+        }
+        
+        /* ===== АДАПТИВНОСТЬ ===== */
+        @media (max-width: 350px) {
+            .main-content {
+                padding: 12px;
+            }
+            
+            .action-btn {
+                padding: 16px 12px;
+            }
+            
+            .btn-icon {
+                font-size: 20px;
+            }
+            
+            .action-btn span {
+                font-size: 13px;
+            }
+            
+            .route-image {
+                height: 100px;
+                font-size: 28px;
+            }
+            
+            .stats-grid {
+                gap: 8px;
+            }
+            
+            .stat-item {
+                padding: 12px 8px;
+            }
+            
+            .stat-number {
+                font-size: 20px;
+            }
+        }
+        
+        /* ===== ТЕМНАЯ ТЕМА ===== */
+        [data-theme="dark"] {
+            --tg-theme-bg-color: #1a1a1a;
+            --tg-theme-secondary-bg-color: #2a2a2a;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #888888;
+            --tg-theme-button-color: #40a7e3;
+        }
+        
+        [data-theme="dark"] .route-card,
+        [data-theme="dark"] .stat-item,
+        [data-theme="dark"] .welcome-card {
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .action-btn {
+            background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+        }
+        
+        [data-theme="dark"] .reward-badge {
+            background: #333333;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -65,6 +396,7 @@
                             <p>2.5 км • 45 мин</p>
                             <div class="route-rewards">
                                 <span class="reward-badge">☕ Кофейня</span>
+                                <span class="route-status new">🆕 С картой</span>
                             </div>
                         </div>
                     </div>
@@ -76,6 +408,7 @@
                             <p>3.2 км • 60 мин</p>
                             <div class="route-rewards">
                                 <span class="reward-badge">🍕 Ресторан</span>
+                                <span class="route-status coming">🔜 Скоро</span>
                             </div>
                         </div>
                     </div>
@@ -87,6 +420,7 @@
                             <p>4.1 км • 75 мин</p>
                             <div class="route-rewards">
                                 <span class="reward-badge">🎭 Ресторан</span>
+                                <span class="route-status coming">🔜 Скоро</span>
                             </div>
                         </div>
                     </div>
@@ -112,29 +446,149 @@
                 </div>
             </section>
         </main>
-
-        <!-- Нижнее меню -->
-        <nav class="bottom-nav">
-            <button class="nav-btn active" onclick="goHome()">
-                <span class="nav-icon">🏠</span>                                
-                <span class="nav-label">Главная</span>
-            </button>
-            <button class="nav-btn" onclick="openRoutes()">
-                <span class="nav-icon">🗺️</span>
-                <span class="nav-label">Маршруты</span>
-            </button>
-            <button class="nav-btn" onclick="openMap()">
-                <span class="nav-icon">🧭</span>
-                <span class="nav-label">Карта</span>
-            </button>
-            <button class="nav-btn" onclick="openRewards()">
-                <span class="nav-icon">🎁</span>
-                <span class="nav-label">Награды</span>
-            </button>
-        </nav>
     </div>
 
-    <script src="js/telegram.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        // ===== ФУНКЦИИ НАВИГАЦИИ =====
+        
+        // Функция открытия маршрута
+        function openRoute(routeId) {
+            console.log('Открытие маршрута:', routeId);
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            // Перенаправляем на страницу конкретного маршрута
+            if (routeId === 'historical') {
+                window.location.href = 'route-john-lenin.html';
+            } else if (routeId === 'parks') {
+                showAlert('🔜 Маршрут "Старая Роща" скоро будет доступен!');
+            } else if (routeId === 'cultural') {
+                showAlert('🔜 Маршрут "Шаги по Омке" скоро будет доступен!');
+            }
+        }
+        
+        // Функция открытия наград
+        function openRewards() {
+            console.log('Переход к наградам...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            window.location.href = 'rewards.html';
+        }
+        
+        // Функция открытия маршрутов
+        function openRoutes() {
+            console.log('Переход к маршрутам...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            window.location.href = 'route-john-lenin.html';
+        }
+        
+        // Функция открытия карты
+        function openMap() {
+            console.log('Переход к карте...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            window.location.href = 'route-john-lenin.html';
+        }
+        
+        // Функция открытия профиля
+        function openProfile() {
+            console.log('Показ профиля...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            // Загружаем статистику из localStorage
+            const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
+            const userData = getUserData();
+            
+            const message = `
+👤 ${userData.first_name || 'Пользователь'}
+📊 Статистика:
+🚶‍♂️ Маршрутов пройдено: ${stats.routesCompleted || 0}
+📏 Расстояние: ${(stats.distanceWalked || 0).toFixed(1)} км
+🎁 Наград получено: ${stats.rewardsEarned || 0}
+            `.trim();
+
+            showAlert(message);
+        }
+        
+        // Вспомогательная функция получения данных пользователя
+        function getUserData() {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                return window.Telegram.WebApp.initDataUnsafe.user;
+            }
+            return {
+                id: 'demo_user',
+                first_name: 'Demo User',
+                username: 'demo'
+            };
+        }
+        
+        // Вспомогательная функция показа уведомлений
+        function showAlert(message) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        // Функция обновления статистики
+        function updateStats() {
+            const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{"routesCompleted": 0, "distanceWalked": 0, "rewardsEarned": 0}');
+            
+            const routesElement = document.getElementById('routesCompleted');
+            const distanceElement = document.getElementById('distanceWalked');
+            const rewardsElement = document.getElementById('rewardsEarned');
+
+            if (routesElement) routesElement.textContent = stats.routesCompleted || 0;
+            if (distanceElement) distanceElement.textContent = (stats.distanceWalked || 0).toFixed(1);
+            if (rewardsElement) rewardsElement.textContent = stats.rewardsEarned || 0;
+        }
+        
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('TagTrip главная страница загружена');
+            
+            // Инициализируем Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                
+                // Применяем тему Telegram
+                if (window.Telegram.WebApp.colorScheme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                }
+                
+                console.log('Telegram WebApp инициализирован');
+            }
+            
+            // Обновляем статистику
+            updateStats();
+            
+            // Проверяем доступность функций
+            console.log('Функции навигации:');
+            console.log('- openRewards:', typeof openRewards === 'function');
+            console.log('- openRoutes:', typeof openRoutes === 'function');  
+            console.log('- openMap:', typeof openMap === 'function');
+            console.log('- openProfile:', typeof openProfile === 'function');
+        });
+        
+        // Отладочная информация
+        console.log('TagTrip App загружен успешно');
+    </script>
 </body>
 </html>

@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="tagtrip-styles.css">
     <link rel="stylesheet" href="themes.css">
     
-    <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- QR Code Library - обновленная версия -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     
     <style>
         .rewards-header {
@@ -171,6 +171,8 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         
         .copy-btn {
@@ -186,6 +188,10 @@
         
         .action-btn:active {
             transform: scale(0.95);
+        }
+        
+        .action-btn:hover {
+            opacity: 0.9;
         }
         
         .instructions {
@@ -264,11 +270,16 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
+            backdrop-filter: blur(2px);
+        }
+        
+        .qr-modal.show {
+            display: flex;
         }
         
         .qr-modal-content {
@@ -276,23 +287,29 @@
             border-radius: var(--border-radius, 12px);
             padding: 24px;
             text-align: center;
-            max-width: 280px;
+            max-width: 300px;
             margin: 0 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         
         .qr-modal h3 {
             margin: 0 0 16px 0;
             font-size: 18px;
             font-weight: 600;
+            color: var(--tg-theme-text-color, #000000);
         }
         
         .qr-code-container {
             margin: 16px 0;
             display: flex;
             justify-content: center;
+            min-height: 200px;
+            align-items: center;
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            border-radius: 8px;
         }
         
-        .qr-code-container canvas {
+        .qr-code-svg {
             border-radius: 8px;
         }
         
@@ -323,6 +340,10 @@
             color: var(--tg-theme-text-color, #000000);
         }
         
+        .modal-btn:active {
+            transform: scale(0.95);
+        }
+        
         .copied-notification {
             position: fixed;
             top: 50%;
@@ -341,6 +362,53 @@
         
         .copied-notification.show {
             opacity: 1;
+        }
+        
+        /* Нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: var(--tg-viewport-width, 375px);
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            padding: 8px 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        
+        .nav-btn.active {
+            color: var(--tg-theme-button-color, #40a7e3);
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+            font-weight: 500;
         }
         
         @media (max-width: 350px) {
@@ -408,10 +476,10 @@
                     </div>
                     
                     <div class="reward-actions">
-                        <button class="action-btn copy-btn" onclick="copyPromoCode('TESTPROMO')">
+                        <button class="action-btn copy-btn" onclick="handleCopyCode('TESTPROMO')" type="button">
                             📋 Копировать
                         </button>
-                        <button class="action-btn qr-btn" onclick="showQrCode('TESTPROMO')">
+                        <button class="action-btn qr-btn" onclick="handleShowQR('TESTPROMO')" type="button">
                             📱 QR-код
                         </button>
                     </div>
@@ -479,6 +547,10 @@
 
     <script src="telegram.js"></script>
     <script>
+        // Глобальные переменные
+        let currentModal = null;
+        
+        // Основной класс управления наградами
         class RewardsManager {
             constructor() {
                 this.rewards = [];
@@ -496,31 +568,65 @@
             }
 
             init() {
+                console.log('Инициализация RewardsManager...');
                 this.loadRewards();
                 this.renderRewards();
                 this.updateStats();
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                // Обработка кликов по модальному окну
+                document.addEventListener('click', (e) => {
+                    if (e.target.id === 'qrModal') {
+                        this.closeQrModal();
+                    }
+                });
+                
+                // Обработка ESC для закрытия модального окна
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && currentModal) {
+                        this.closeQrModal();
+                    }
+                });
             }
 
             loadRewards() {
-                // Загружаем данные из localStorage
-                const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
-                this.rewards = stats.unlockedRewards || [];
-                
-                // Добавляем тестовый промокод если его еще нет
-                if (!this.rewards.find(r => r.type === 'test')) {
-                    this.rewards.unshift(this.testReward);
+                try {
+                    const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
+                    this.rewards = stats.unlockedRewards || [];
+                    
+                    // Добавляем тестовый промокод если его еще нет
+                    if (!this.rewards.find(r => r.type === 'test')) {
+                        this.rewards.unshift(this.testReward);
+                        this.saveRewards();
+                    }
+                    console.log('Награды загружены:', this.rewards);
+                } catch (error) {
+                    console.error('Ошибка загрузки наград:', error);
+                    this.rewards = [this.testReward];
                     this.saveRewards();
                 }
             }
 
             saveRewards() {
-                const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
-                stats.unlockedRewards = this.rewards;
-                localStorage.setItem('tagtrip_stats', JSON.stringify(stats));
+                try {
+                    const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{}');
+                    stats.unlockedRewards = this.rewards;
+                    localStorage.setItem('tagtrip_stats', JSON.stringify(stats));
+                    console.log('Награды сохранены');
+                } catch (error) {
+                    console.error('Ошибка сохранения наград:', error);
+                }
             }
 
             renderRewards() {
                 const dynamicRewardsContainer = document.getElementById('dynamicRewards');
+                
+                if (!dynamicRewardsContainer) {
+                    console.error('Не найден контейнер dynamicRewards');
+                    return;
+                }
                 
                 // Фильтруем только заработанные награды (не тестовые)
                 const earnedRewards = this.rewards.filter(reward => reward.type !== 'test');
@@ -550,10 +656,10 @@
                         </div>
                         
                         <div class="reward-actions">
-                            <button class="action-btn copy-btn" onclick="copyPromoCode('${reward.code || 'JOHNLENIN10'}')">
+                            <button class="action-btn copy-btn" onclick="handleCopyCode('${reward.code || 'JOHNLENIN10'}')" type="button">
                                 📋 Копировать
                             </button>
-                            <button class="action-btn qr-btn" onclick="showQrCode('${reward.code || 'JOHNLENIN10'}')">
+                            <button class="action-btn qr-btn" onclick="handleShowQR('${reward.code || 'JOHNLENIN10'}')" type="button">
                                 📱 QR-код
                             </button>
                         </div>
@@ -564,145 +670,233 @@
             updateStats() {
                 const totalRewards = this.rewards.length;
                 const usedRewards = this.rewards.filter(r => r.used).length;
-                const savedMoney = (this.rewards.filter(r => r.type !== 'test').length * 50) + 10; // +10₽ за тестовый промокод
+                const savedMoney = (this.rewards.filter(r => r.type !== 'test').length * 50) + 10;
                 
-                document.getElementById('totalRewards').textContent = totalRewards;
-                document.getElementById('usedRewards').textContent = usedRewards;
-                document.getElementById('savedMoney').textContent = savedMoney + '₽';
+                const totalEl = document.getElementById('totalRewards');
+                const usedEl = document.getElementById('usedRewards');
+                const savedEl = document.getElementById('savedMoney');
+                
+                if (totalEl) totalEl.textContent = totalRewards;
+                if (usedEl) usedEl.textContent = usedRewards;
+                if (savedEl) savedEl.textContent = savedMoney + '₽';
             }
         }
 
-        // Копирование промокода
-        function copyPromoCode(code) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(code).then(() => {
-                    showCopiedNotification();
-                }).catch(() => {
-                    fallbackCopy(code);
-                });
+        // Функции для работы с промокодами
+        function handleCopyCode(code) {
+            console.log('Копирование кода:', code);
+            
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code)
+                    .then(() => {
+                        showCopiedNotification();
+                        console.log('Промокод скопирован через Clipboard API');
+                    })
+                    .catch((err) => {
+                        console.error('Clipboard API не сработал:', err);
+                        fallbackCopy(code);
+                    });
             } else {
                 fallbackCopy(code);
-            }
-
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('success');
             }
         }
 
         function fallbackCopy(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
             try {
-                document.execCommand('copy');
-                showCopiedNotification();
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.top = '0';
+                textArea.style.left = '0';
+                textArea.style.width = '2em';
+                textArea.style.height = '2em';
+                textArea.style.padding = '0';
+                textArea.style.border = 'none';
+                textArea.style.outline = 'none';
+                textArea.style.boxShadow = 'none';
+                textArea.style.background = 'transparent';
+                
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    showCopiedNotification();
+                    console.log('Промокод скопирован через execCommand');
+                } else {
+                    console.error('execCommand не сработал');
+                    alert('Промокод: ' + text + '\n\nСкопируйте вручную');
+                }
             } catch (err) {
-                console.error('Fallback copy failed', err);
+                console.error('Fallback copy failed:', err);
+                alert('Промокод: ' + text + '\n\nСкопируйте вручную');
             }
-            document.body.removeChild(textArea);
         }
 
         function showCopiedNotification() {
             const notification = document.getElementById('copiedNotification');
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 2000);
+            if (notification) {
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            }
         }
 
-        // QR код
-        function showQrCode(code) {
+        // Функции для работы с QR кодами
+        function handleShowQR(code) {
+            console.log('Показ QR для кода:', code);
+            
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('medium');
+            }
+            
             const modal = document.getElementById('qrModal');
             const qrContainer = document.getElementById('qrCodeContainer');
             const qrTitle = document.getElementById('qrTitle');
             const qrCodeText = document.getElementById('qrCode');
 
-            // Очищаем предыдущий QR код
-            qrContainer.innerHTML = '';
+            if (!modal || !qrContainer || !qrTitle || !qrCodeText) {
+                console.error('QR Modal элементы не найдены');
+                alert('Ошибка показа QR-кода');
+                return;
+            }
 
-            // Генерируем новый QR код
-            QRCode.toCanvas(code, {
-                width: 200,
-                height: 200,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                }
-            }, (error, canvas) => {
-                if (error) {
-                    console.error('QR Code generation error:', error);
-                    qrContainer.innerHTML = '<p>Ошибка генерации QR-кода</p>';
-                } else {
-                    qrContainer.appendChild(canvas);
-                }
-            });
-
+            // Устанавливаем заголовок и текст кода
             qrTitle.textContent = code === 'TESTPROMO' ? 'QR-код тестового промокода' : 'QR-код промокода';
             qrCodeText.textContent = code;
-            modal.style.display = 'flex';
+            
+            // Очищаем контейнер
+            qrContainer.innerHTML = '';
 
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('medium');
+            try {
+                // Создаем QR код используя простую библиотеку
+                generateQRCode(code, qrContainer);
+                
+                // Показываем модальное окно
+                modal.classList.add('show');
+                currentModal = modal;
+                
+                // Блокируем скролл фона
+                document.body.style.overflow = 'hidden';
+                
+            } catch (error) {
+                console.error('Ошибка генерации QR-кода:', error);
+                qrContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Ошибка генерации QR-кода</div>';
+                modal.classList.add('show');
+                currentModal = modal;
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function generateQRCode(text, container) {
+            // Простая SVG-генерация QR-кода
+            const qr = qrcode(0, 'M');
+            qr.addData(text);
+            qr.make();
+            
+            const size = 200;
+            const svg = qr.createSvgTag({
+                cellSize: Math.floor(size / qr.getModuleCount()),
+                margin: 0,
+                scalable: false
+            });
+            
+            container.innerHTML = svg;
+            
+            // Добавляем стили к SVG
+            const svgElement = container.querySelector('svg');
+            if (svgElement) {
+                svgElement.classList.add('qr-code-svg');
+                svgElement.style.border = '2px solid #ddd';
             }
         }
 
         function closeQrModal() {
-            document.getElementById('qrModal').style.display = 'none';
-            if (window.telegramApp) {
-                window.telegramApp.hapticFeedback('light');
+            const modal = document.getElementById('qrModal');
+            if (modal) {
+                modal.classList.remove('show');
+                currentModal = null;
+                document.body.style.overflow = '';
+                
+                if (window.telegramApp) {
+                    window.telegramApp.hapticFeedback('light');
+                }
             }
         }
 
         function copyFromModal() {
-            const code = document.getElementById('qrCode').textContent;
-            copyPromoCode(code);
+            const code = document.getElementById('qrCode')?.textContent;
+            if (code) {
+                handleCopyCode(code);
+            }
         }
 
-        // Навигация
+        // Навигационные функции
         function goHome() {
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
             window.location.href = 'index.html';
         }
 
         function openRoutes() {
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
             window.location.href = 'routes.html';
         }
 
-        function goToRoutes() {
-            window.location.href = 'index.html';
-        }
-
         function openMap() {
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
             window.location.href = 'route-john-lenin.html';
         }
 
         function openRewards() {
-            // Уже на странице наград
             if (window.telegramApp) {
                 window.telegramApp.hapticFeedback('light');
             }
         }
 
-        // Закрытие модального окна по клику вне его
-        document.getElementById('qrModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeQrModal();
+        // Инициализация при загрузке страницы
+        let rewardsManager;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен, инициализируем приложение...');
+            
+            try {
+                rewardsManager = new RewardsManager();
+                console.log('RewardsManager успешно инициализирован');
+            } catch (error) {
+                console.error('Ошибка инициализации RewardsManager:', error);
+            }
+            
+            // Применяем темную тему если нужно
+            if (window.telegramApp && window.telegramApp.tg && window.telegramApp.tg.colorScheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                console.log('Применена темная тема');
             }
         });
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            new RewardsManager();
-            
-            console.log('Страница наград загружена с тестовым промокодом');
-            
-            // Применяем темную тему если нужно
-            if (window.telegramApp && window.telegramApp.tg.colorScheme === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            }
-        });
+        // Отладочная информация
+        console.log('Скрипт rewards загружен');
+        
+        // Проверяем доступность функций при загрузке
+        setTimeout(() => {
+            console.log('Проверка функций через 1 секунду...');
+            console.log('handleShowQR доступна:', typeof handleShowQR === 'function');
+            console.log('handleCopyCode доступна:', typeof handleCopyCode === 'function');
+            console.log('QR Modal найден:', !!document.getElementById('qrModal'));
+        }, 1000);
     </script>
 </body>
 </html>
