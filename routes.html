@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Маршруты - TagTrip</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        /* ===== БАЗОВЫЕ СТИЛИ ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: var(--tg-viewport-width, 375px);
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+        }
+        
+        /* ===== ШАПКА СТРАНИЦЫ ===== */
+        .routes-header {
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .routes-header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .routes-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+        .main-content {
+            padding: 16px;
+            padding-bottom: 100px; /* ДОБАВЛЕН отступ снизу для нижней панели */
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        /* ===== ДОСТУПНЫЕ МАРШРУТЫ ===== */
+        .available-routes {
+            margin-bottom: 32px;
+        }
+        
+        .route-card {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .route-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .route-image {
+            height: 140px;
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        .route-image::before {
+            content: '🏛️';
+        }
+        
+        .route-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .route-info {
+            padding: 20px;
+        }
+        
+        .route-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .route-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .route-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .route-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .route-rewards {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .reward-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+        
+        .start-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .start-btn:active {
+            transform: scale(0.95);
+            background: #45a049;
+        }
+        
+        /* ===== МАРШРУТЫ В РАЗРАБОТКЕ ===== */
+        .coming-routes {
+            margin-bottom: 32px; /* УВЕЛИЧИЛ отступ между секциями */
+        }
+        
+        .coming-card {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            opacity: 0.7;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coming-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 193, 7, 0.1) 10px,
+                rgba(255, 193, 7, 0.1) 20px
+            );
+            pointer-events: none;
+        }
+        
+        .coming-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .coming-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .coming-status {
+            background: #FFC107;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .coming-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 8px;
+        }
+        
+        .coming-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        
+        /* ===== ИНФОРМАЦИОННЫЙ БЛОК ===== */
+        .info-section {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(76, 175, 80, 0.1));
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 32px; /* УВЕЛИЧИЛ отступ внизу */
+        }
+        
+        .info-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .info-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .info-text {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            line-height: 1.5;
+        }
+        
+        /* ===== НИЖНЕЕ МЕНЮ ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: var(--tg-viewport-width, 375px);
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            padding: 8px 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            height: 64px; /* ФИКСИРОВАННАЯ высота нижней панели */
+        }
+        
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        
+        .nav-btn.active {
+            color: var(--tg-theme-button-color, #40a7e3);
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        /* ===== ДОПОЛНИТЕЛЬНОЕ ПРОСТРАНСТВО ===== */
+        .content-spacer {
+            height: 20px; /* Дополнительное пространство перед нижней панелью */
+        }
+        
+        /* ===== АДАПТИВНОСТЬ ===== */
+        @media (max-width: 350px) {
+            .main-content {
+                padding: 12px;
+                padding-bottom: 90px; /* АДАПТИВНЫЙ отступ для маленьких экранов */
+            }
+            
+            .route-image {
+                height: 120px;
+                font-size: 40px;
+            }
+            
+            .route-info {
+                padding: 16px;
+            }
+            
+            .route-title {
+                font-size: 18px;
+            }
+            
+            .coming-card {
+                padding: 16px;
+            }
+            
+            .bottom-nav {
+                height: 60px; /* Меньшая высота на маленьких экранах */
+            }
+        }
+        
+        /* ===== БЕЗОПАСНАЯ ЗОНА ДЛЯ iOS ===== */
+        @supports (padding: max(0px)) {
+            .bottom-nav {
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+                height: calc(64px + env(safe-area-inset-bottom));
+            }
+            
+            .main-content {
+                padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* ===== ТЕМНАЯ ТЕМА ===== */
+        [data-theme="dark"] {
+            --tg-theme-bg-color: #1a1a1a;
+            --tg-theme-secondary-bg-color: #2a2a2a;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #888888;
+            --tg-theme-button-color: #40a7e3;
+        }
+        
+        [data-theme="dark"] .route-card,
+        [data-theme="dark"] .coming-card,
+        [data-theme="dark"] .info-section {
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .reward-info {
+            background: #333333;
+        }
+        
+        [data-theme="dark"] .bottom-nav {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Шапка страницы -->
+        <header class="routes-header">
+            <h1>🗺️ Маршруты</h1>
+            <p>Выберите маршрут для прогулки</p>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Доступные маршруты -->
+            <section class="available-routes">
+                <h2 class="section-title">✅ Доступные маршруты</h2>
+                
+                <div class="route-card" onclick="startRoute('john-lenin')">
+                    <div class="route-image">
+                        <div class="route-badge">ДОСТУПЕН</div>
+                    </div>
+                    <div class="route-info">
+                        <h3 class="route-title">🏛️ Джон Ленин</h3>
+                        <p class="route-description">
+                            Исследуйте исторические места центра Омска: от Омской крепости до Литературного музея
+                        </p>
+                        <div class="route-stats">
+                            <div class="route-stat">
+                                <span>📏</span>
+                                <span>2.5 км</span>
+                            </div>
+                            <div class="route-stat">
+                                <span>⏱️</span>
+                                <span>45 мин</span>
+                            </div>
+                            <div class="route-stat">
+                                <span>🟢</span>
+                                <span>Легкий</span>
+                            </div>
+                        </div>
+                        <div class="route-rewards">
+                            <div class="reward-info">
+                                <span>☕</span>
+                                <span>Промокод КафеПартнер</span>
+                            </div>
+                            <button class="start-btn" onclick="event.stopPropagation(); goToRoute()">
+                                Начать →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Маршруты в разработке -->
+            <section class="coming-routes">
+                <h2 class="section-title">🔜 В разработке</h2>
+                
+                <div class="coming-card">
+                    <div class="coming-header">
+                        <h3 class="coming-title">🌳 Старая Роща</h3>
+                        <span class="coming-status">Скоро</span>
+                    </div>
+                    <p class="coming-description">
+                        Прогулка по одному из самых зеленых районов Омска с посещением парков и скверов
+                    </p>
+                    <div class="coming-stats">
+                        <span>📏 3.2 км</span>
+                        <span>⏱️ 60 мин</span>
+                        <span>🟡 Средний</span>
+                        <span>🍕 Ресторан</span>
+                    </div>
+                </div>
+                
+                <div class="coming-card">
+                    <div class="coming-header">
+                        <h3 class="coming-title">🎭 Шаги по Омке</h3>
+                        <span class="coming-status">Скоро</span>
+                    </div>
+                    <p class="coming-description">
+                        Культурный маршрут по театрам, музеям и художественным галереям города
+                    </p>
+                    <div class="coming-stats">
+                        <span>📏 4.1 км</span>
+                        <span>⏱️ 75 мин</span>
+                        <span>🟡 Средний</span>
+                        <span>🎪 Развлечения</span>
+                    </div>
+                </div>
+                
+                <div class="coming-card">
+                    <div class="coming-header">
+                        <h3 class="coming-title">🏢 Деловой центр</h3>
+                        <span class="coming-status">Планируется</span>
+                    </div>
+                    <p class="coming-description">
+                        Современный Омск: небоскребы, торговые центры и новые районы
+                    </p>
+                    <div class="coming-stats">
+                        <span>📏 2.8 км</span>
+                        <span>⏱️ 50 мин</span>
+                        <span>🟢 Легкий</span>
+                        <span>🛍️ Шоппинг</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Информационный блок -->
+            <section class="info-section">
+                <div class="info-icon">🚀</div>
+                <h3 class="info-title">Больше маршрутов уже близко!</h3>
+                <p class="info-text">
+                    Мы активно работаем над новыми маршрутами. Следите за обновлениями и будьте первыми, кто их попробует!
+                </p>
+            </section>
+
+            <!-- Дополнительное пространство перед нижней панелью -->
+            <div class="content-spacer"></div>
+        </main>
+
+        <!-- Нижнее меню -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" onclick="goHome()">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Главная</span>
+            </button>
+            <button class="nav-btn active" onclick="openRoutes()">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Маршруты</span>
+            </button>
+            <button class="nav-btn" onclick="openMap()">
+                <span class="nav-icon">🧭</span>
+                <span class="nav-label">Карта</span>
+            </button>
+            <button class="nav-btn" onclick="openRewards()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Награды</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // ===== ФУНКЦИИ НАВИГАЦИИ =====
+        
+        // Функция перехода к маршруту
+        function startRoute(routeId) {
+            console.log('Выбран маршрут:', routeId);
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            
+            if (routeId === 'john-lenin') {
+                goToRoute();
+            }
+        }
+        
+        // Переход к странице маршрута
+        function goToRoute() {
+            console.log('Переход к карте маршрута Джон Ленин...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+            
+            window.location.href = 'route-john-lenin.html';
+        }
+        
+        // Навигационные функции
+        function goHome() {
+            console.log('Переход на главную...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+            
+            window.location.href = 'index.html';
+        }
+        
+        function openRoutes() {
+            console.log('Уже на странице маршрутов');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        function openMap() {
+            console.log('Переход к карте...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+            
+            window.location.href = 'route-john-lenin.html';
+        }
+        
+        function openRewards() {
+            console.log('Переход к наградам...');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+            
+            window.location.href = 'rewards.html';
+        }
+        
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Страница маршрутов загружена');
+            
+            // Инициализируем Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                
+                // Применяем тему Telegram
+                if (window.Telegram.WebApp.colorScheme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                }
+                
+                console.log('Telegram WebApp инициализирован');
+            }
+            
+            console.log('Функции навигации готовы');
+        });
+    </script>
+</body>
+</html>
