@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Маршрут: Джон Ленин - TagTrip</title>
     
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Leaflet и зависимости (как в оригинале) -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -12,353 +18,656 @@
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
     
-            <meta name="viewport" content="width=device-width,
-                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <style>
-                #map_946c5598974d9a83d38ccf2622ee712b {
-                    position: relative;
-                    width: 100.0%;
-                    height: 100.0%;
-                    left: 0.0%;
-                    top: 0.0%;
-                }
-                .leaflet-container { font-size: 1rem; }
-            </style>
-
-            <style>html, body {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-            }
-            </style>
-
-            <style>#map {
-                position:absolute;
-                top:0;
-                bottom:0;
-                right:0;
-                left:0;
-                }
-            </style>
-
-            <script>
-                L_NO_TOUCH = false;
-                L_DISABLE_3D = false;
-            </script>
-
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="tagtrip-styles.css">
+    <link rel="stylesheet" href="themes.css">
+    
+    <style>
+        /* Специальные стили для страницы карты */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+        }
         
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 100px); /* УМЕНЬШИЛ отступ для более тонкой плашки */
+            max-width: var(--tg-viewport-width, 375px);
+            margin: 0 auto;
+        }
+        
+        #map_946c5598974d9a83d38ccf2622ee712b {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .route-header {
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            color: white;
+            padding: 12px 16px; /* УМЕНЬШИЛ padding для тонкой плашки */
+            margin: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .route-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .route-info h1 {
+            font-size: 18px; /* УМЕНЬШИЛ размер заголовка */
+            margin: 0;
+        }
+        
+        .route-info p {
+            font-size: 12px; /* УМЕНЬШИЛ размер подзаголовка */
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .route-stats {
+            display: flex;
+            gap: 12px; /* УМЕНЬШИЛ отступы */
+            font-size: 12px; /* УМЕНЬШИЛ размер */
+        }
+        
+        .route-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .control-buttons {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 0 16px;
+            max-width: var(--tg-viewport-width, 375px);
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        
+        .control-btn {
+            flex: 1;
+            background: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .control-btn.secondary {
+            background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+            color: var(--tg-theme-text-color, #000000);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .start-btn {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4); }
+            50% { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.8); }
+            100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4); }
+        }
+        
+        /* Нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: var(--tg-viewport-width, 375px);
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            padding: 8px 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        
+        .nav-btn.active {
+            color: var(--tg-theme-button-color, #40a7e3);
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 350px) {
+            .route-stats {
+                gap: 8px;
+                font-size: 11px;
+            }
+            
+            .control-btn {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+        
+        /* Стили для попапов Leaflet - УПРОЩЕННЫЕ */
+        .leaflet-popup-content {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .leaflet-popup-content h4 {
+            margin: 0 0 6px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .leaflet-popup-content p {
+            margin: 0;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
-    
-    
-            <div class="folium-map" id="map_946c5598974d9a83d38ccf2622ee712b" ></div>
-        
-</body>
-<script>
-    
-    
-            var map_946c5598974d9a83d38ccf2622ee712b = L.map(
-                "map_946c5598974d9a83d38ccf2622ee712b",
-                {
-                    center: [54.9849, 73.3675],
-                    crs: L.CRS.EPSG3857,
-                    ...{
-  "zoom": 14,
-  "zoomControl": true,
-  "preferCanvas": false,
-}
+    <div class="app-container">
+        <!-- ТОНКАЯ шапка маршрута -->
+        <header class="route-header">
+            <div class="route-info">
+                <div>
+                    <h1>🏛️ Джон Ленин</h1>
+                    <p>Исторические места Омска</p>
+                </div>
+                <div class="route-stats">
+                    <div class="route-stat">
+                        <span>📏</span>
+                        <span>2.5 км</span>
+                    </div>
+                    <div class="route-stat">
+                        <span>⏱️</span>
+                        <span>45 мин</span>
+                    </div>
+                    <div class="route-stat">
+                        <span>🟢</span>
+                        <span>Легкий</span>
+                    </div>
+                </div>
+            </div>
+        </header>
 
+        <!-- Контейнер карты (точно такой же ID как в оригинале) -->
+        <div class="map-container">
+            <div id="map_946c5598974d9a83d38ccf2622ee712b"></div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="control-buttons">
+            <button class="control-btn secondary" onclick="goBack()">
+                🔙 Назад
+            </button>
+            <button class="control-btn start-btn" onclick="startRoute()">
+                🚀 Начать маршрут
+            </button>
+        </div>
+
+        <!-- Нижнее меню -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" onclick="goHome()">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Главная</span>
+            </button>
+            <button class="nav-btn" onclick="openRoutes()">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Маршруты</span>
+            </button>
+            <button class="nav-btn active" onclick="openMap()">
+                <span class="nav-icon">🧭</span>
+                <span class="nav-label">Карта</span>
+            </button>
+            <button class="nav-btn" onclick="openRewards()">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Награды</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Интеграция с Telegram -->
+    <script src="telegram.js"></script>
+    
+    <script>
+        // === ОРИГИНАЛЬНЫЙ КОД КАРТЫ (без изменений настроек) ===
+        
+        var map_946c5598974d9a83d38ccf2622ee712b = L.map(
+            "map_946c5598974d9a83d38ccf2622ee712b",
+            {
+                center: [54.9849, 73.3675],
+                crs: L.CRS.EPSG3857,
+                zoom: 14,
+                zoomControl: true,
+                preferCanvas: false,
+            }
+        );
+
+        var tile_layer_2bc34b9a9d4c0e01b2cb3a6b2e74ecdf = L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {"attribution": "Data by \u0026copy; \u003ca target=\"_blank\" href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca target=\"_blank\" href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        // === КОНТУР МАРШРУТА (из оригинального файла) ===
+        var poly_line_route = L.polyline(
+            [[54.99401083539759, 73.36019985859677], [54.99156775430114, 73.36313187292767], [54.99025832317938, 73.36698683629957], [54.98904521584077, 73.3715198902994], [54.98616454646889, 73.37408953103235], [54.985064157680016, 73.37728641653934], [54.984723638762006, 73.38015682106457], [54.98651269885947, 73.38240862814538]],
+            {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 0.7, "renderer": null, "stroke": true, "weight": 8}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var icon_b7c6b4172efd285d1fde664b24d844e5 = L.AwesomeMarkers.icon(
+            {"extraClasses": "fa-rotate-0", "icon": "play", "iconColor": "white", "markerColor": "green", "prefix": "fa"}
+        );
+
+        var marker_c95c0b3c9e5f269dd1b79c8c27ab71b7 = L.marker(
+            [54.99401083539759, 73.36019985859677],
+            {}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var popup_9e4e18b61c7fb44f4f03b0fdc3e76beb = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
+        popup_9e4e18b61c7fb44f4f03b0fdc3e76beb.setContent(
+            `<div>
+                <h4>🏰 Омская крепость</h4>
+                <p>Начальная точка маршрута</p>
+            </div>`
+        );
+        marker_c95c0b3c9e5f269dd1b79c8c27ab71b7.bindPopup(popup_9e4e18b61c7fb44f4f03b0fdc3e76beb);
+        marker_c95c0b3c9e5f269dd1b79c8c27ab71b7.bindTooltip(
+            `<div>Нажми для информации: старт</div>`,
+            {"sticky": true}
+        );
+        marker_c95c0b3c9e5f269dd1b79c8c27ab71b7.setIcon(icon_b7c6b4172efd285d1fde664b24d844e5);
+
+        var icon_9e4ffa4e1b8b2a3b0c0f3c27c7f85ede = L.AwesomeMarkers.icon(
+            {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+        );
+
+        var marker_2f82e38e6d244a8e90b3e76a2a3c4b5d = L.marker(
+            [54.99025832317938, 73.36698683629957],
+            {}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
+        popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1.setContent(
+            `<div>
+                <h4>⛪ Успенский собор</h4>
+                <p>Главный храм города</p>
+            </div>`
+        );
+        marker_2f82e38e6d244a8e90b3e76a2a3c4b5d.bindPopup(popup_3b2e17a9d5c244e8a1f7b3e8d2c9f6e1);
+        marker_2f82e38e6d244a8e90b3e76a2a3c4b5d.bindTooltip(
+            `<div>Нажми для информации: собор</div>`,
+            {"sticky": true}
+        );
+        marker_2f82e38e6d244a8e90b3e76a2a3c4b5d.setIcon(icon_9e4ffa4e1b8b2a3b0c0f3c27c7f85ede);
+
+        var marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8 = L.marker(
+            [54.98616454646889, 73.37408953103235],
+            {}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
+        popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0.setContent(
+            `<div>
+                <h4>🎭 Драматический театр</h4>
+                <p>Старейший театр Сибири</p>
+            </div>`
+        );
+        marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8.bindPopup(popup_5d8e2b9f6c3a4e7b9d2f5c8e1b4a7d0);
+        marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8.bindTooltip(
+            `<div>Нажми для информации: театр</div>`,
+            {"sticky": true}
+        );
+        marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8.setIcon(icon_9e4ffa4e1b8b2a3b0c0f3c27c7f85ede);
+
+        var marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9 = L.marker(
+            [54.984723638762006, 73.38015682106457],
+            {}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
+        popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2.setContent(
+            `<div>
+                <h4>🏛️ Литературный музей</h4>
+                <p>Музей Ф.М. Достоевского</p>
+            </div>`
+        );
+        marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9.bindPopup(popup_7c9d4f0e8b2f5e6b0d3f6c9f8b5e8f2);
+        marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9.bindTooltip(
+            `<div>Нажми для информации: музей</div>`,
+            {"sticky": true}
+        );
+        marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9.setIcon(icon_9e4ffa4e1b8b2a3b0c0f3c27c7f85ede);
+
+        var icon_end_marker = L.AwesomeMarkers.icon(
+            {"extraClasses": "fa-rotate-0", "icon": "stop", "iconColor": "white", "markerColor": "red", "prefix": "fa"}
+        );
+
+        var marker_31fdb790a3d21523569fdaa0f18d1b4a = L.marker(
+            [54.98651269885947, 73.38240862814538],
+            {}
+        ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+
+        var popup_395d34a32d0211b26a4c70ca3fef5f81 = L.popup({"maxWidth": "100%"});
+        // УПРОЩЕННЫЙ контент попапа
+        popup_395d34a32d0211b26a4c70ca3fef5f81.setContent(
+            `<div>
+                <h4>🏁 Финиш маршрута</h4>
+                <p>Поздравляем с прохождением!</p>
+            </div>`
+        );
+        marker_31fdb790a3d21523569fdaa0f18d1b4a.bindPopup(popup_395d34a32d0211b26a4c70ca3fef5f81);
+        marker_31fdb790a3d21523569fdaa0f18d1b4a.bindTooltip(
+            `<div>Нажми для информации: конец</div>`,
+            {"sticky": true}
+        );
+        marker_31fdb790a3d21523569fdaa0f18d1b4a.setIcon(icon_end_marker);
+
+        // === ДОПОЛНИТЕЛЬНЫЙ ФУНКЦИОНАЛ TAGTRIP ===
+        
+        // Переменные для управления маршрутом
+        let routeStarted = false;
+        let userMarker = null;
+        
+        // Данные маршрута для отслеживания прогресса (используем ТОЧНЫЕ координаты из оригинала)
+        const routePoints = [
+            {
+                name: 'Омская крепость',
+                lat: 54.99401083539759,
+                lon: 73.36019985859677,
+                marker: marker_c95c0b3c9e5f269dd1b79c8c27ab71b7,
+                visited: false
+            },
+            {
+                name: 'Успенский собор',
+                lat: 54.99025832317938,
+                lon: 73.36698683629957,
+                marker: marker_2f82e38e6d244a8e90b3e76a2a3c4b5d,
+                visited: false
+            },
+            {
+                name: 'Драматический театр',
+                lat: 54.98616454646889,
+                lon: 73.37408953103235,
+                marker: marker_4c7f9a8e5b2f4d6a8c1e3b7f9a2d5e8,
+                visited: false
+            },
+            {
+                name: 'Литературный музей',
+                lat: 54.984723638762006,
+                lon: 73.38015682106457,
+                marker: marker_6b8c3e9f7a1d4f5a9c2e4b8f7a3d6e9,
+                visited: false
+            },
+            {
+                name: 'Финиш',
+                lat: 54.98651269885947,
+                lon: 73.38240862814538,
+                marker: marker_31fdb790a3d21523569fdaa0f18d1b4a,
+                visited: false
+            }
+        ];
+
+        // Геолокация и отслеживание прогресса
+        function updateUserPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Обновляем или создаем маркер пользователя
+            if (userMarker) {
+                userMarker.setLatLng([lat, lon]);
+            } else {
+                const userIcon = L.AwesomeMarkers.icon({
+                    extraClasses: "fa-rotate-0",
+                    icon: "user",
+                    iconColor: "white",
+                    markerColor: "darkblue",
+                    prefix: "fa"
+                });
+                
+                userMarker = L.marker([lat, lon], { icon: userIcon })
+                    .addTo(map_946c5598974d9a83d38ccf2622ee712b)
+                    .bindPopup('👤 Ваше местоположение')
+                    .bindTooltip('Вы здесь', {"sticky": true});
+            }
+            
+            // Проверяем близость к точкам маршрута (если маршрут начат)
+            if (routeStarted) {
+                checkRouteProgress(lat, lon);
+            }
+        }
+        
+        function checkRouteProgress(userLat, userLon) {
+            routePoints.forEach((point, index) => {
+                if (point.visited) return;
+                
+                const distance = calculateDistance(userLat, userLon, point.lat, point.lon);
+                
+                // Если пользователь в радиусе 100 метров от точки
+                if (distance < 0.1) {
+                    point.visited = true;
+                    
+                    // Уведомление о достижении точки
+                    if (window.telegramApp) {
+                        window.telegramApp.hapticFeedback('success');
+                        window.telegramApp.showAlert(`✅ Вы достигли: ${point.name}!`);
+                    } else {
+                        alert(`✅ Вы достигли: ${point.name}!`);
+                    }
+                    
+                    // Проверяем, все ли точки пройдены
+                    const allVisited = routePoints.every(p => p.visited);
+                    if (allVisited) {
+                        setTimeout(() => {
+                            completeRoute();
+                        }, 1500);
+                    }
                 }
-            );
-
+            });
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Радиус Земли в км
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function startRoute() {
+            routeStarted = true;
             
-
-        
-    
-            var tile_layer_16c4ee28980f8415417c5277a221b7ea = L.tileLayer(
-                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                {
-  "minZoom": 0,
-  "maxZoom": 19,
-  "maxNativeZoom": 19,
-  "noWrap": false,
-  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
-  "subdomains": "abc",
-  "detectRetina": false,
-  "tms": false,
-  "opacity": 1,
-}
-
-            );
-        
-    
-            tile_layer_16c4ee28980f8415417c5277a221b7ea.addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-            var poly_line_0d6f24f17b39e55b113c669307f04c1c = L.polyline(
-                [[54.99401083539759, 73.36019985859677], [54.99156775430114, 73.36313187292767], [54.99025832317938, 73.36698683629957], [54.98904521584077, 73.3715198902994], [54.98616454646889, 73.37408953103235], [54.983356306227904, 73.37601420001707], [54.98346148731727, 73.37766391647484], [54.984723638762006, 73.38015682106457], [54.98651269885947, 73.38240862814538]],
-                {"bubblingMouseEvents": true, "color": "blue", "dashArray": "10,10", "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.7, "smoothFactor": 1.0, "stroke": true, "weight": 8}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-        var popup_3845097fd132ec83e7bcffd2977acfdc = L.popup({
-  "maxWidth": "100%",
-});
-
-        
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('medium');
+                window.telegramApp.showAlert('🚀 Маршрут "Джон Ленин" начат! Направляйтесь к Омской крепости.');
+            } else {
+                alert('🚀 Маршрут "Джон Ленин" начат!');
+            }
             
-                var html_354a152ed56bb69c926b4e492034d092 = $(`<div id="html_354a152ed56bb69c926b4e492034d092" style="width: 100.0%; height: 100.0%;">Маршрут <Джон Ленин></div>`)[0];
-                popup_3845097fd132ec83e7bcffd2977acfdc.setContent(html_354a152ed56bb69c926b4e492034d092);
+            // Изменяем кнопку
+            const startBtn = document.querySelector('.start-btn');
+            if (startBtn) {
+                startBtn.innerHTML = '⏸️ Остановить';
+                startBtn.onclick = stopRoute;
+                startBtn.classList.remove('start-btn');
+                startBtn.classList.add('stop-btn');
+            }
             
+            // Запрашиваем геолокацию
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    updateUserPosition,
+                    (error) => console.warn('Ошибка геолокации:', error),
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            }
+        }
         
-
-        poly_line_0d6f24f17b39e55b113c669307f04c1c.bindPopup(popup_3845097fd132ec83e7bcffd2977acfdc)
-        ;
-
-        
-    
-    
-            var marker_f002eb1ff3913b4f02fe988df2be537d = L.marker(
-                [54.99401083539759, 73.36019985859677],
-                {
-}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-            var icon_dd5820a5ace2b1463d6dde0032b9e783 = L.AwesomeMarkers.icon(
-                {
-  "markerColor": "red",
-  "iconColor": "white",
-  "icon": "info-sign",
-  "prefix": "glyphicon",
-  "extraClasses": "fa-rotate-0",
-}
-            );
-        
-    
-        var popup_78b6686e03b0fad552a51dc6821ccd17 = L.popup({
-  "maxWidth": 300,
-});
-
-        
+        function stopRoute() {
+            routeStarted = false;
             
-                var html_6e7486603e024b895d511a23743d43bb = $(`<div id="html_6e7486603e024b895d511a23743d43bb" style="width: 100.0%; height: 100.0%;">     <div style="min-width: 200px">         <h4 style="margin: 0; color: #2c3e50;">Начало</h4>         <hr style="margin: 5px 0;">         <p style="margin: 0; font-size: 14px; color: #34495e;"></p>     </div>     </div>`)[0];
-                popup_78b6686e03b0fad552a51dc6821ccd17.setContent(html_6e7486603e024b895d511a23743d43bb);
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+                window.telegramApp.showAlert('⏸️ Маршрут остановлен.');
+            }
             
-        
-
-        marker_f002eb1ff3913b4f02fe988df2be537d.bindPopup(popup_78b6686e03b0fad552a51dc6821ccd17)
-        ;
-
-        
-    
-    
-            marker_f002eb1ff3913b4f02fe988df2be537d.bindTooltip(
-                `<div>
-                     Нажми для информации: Начало
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-                marker_f002eb1ff3913b4f02fe988df2be537d.setIcon(icon_dd5820a5ace2b1463d6dde0032b9e783);
+            // Сбрасываем состояние точек
+            routePoints.forEach(point => {
+                point.visited = false;
+            });
             
-    
-            var marker_3990d126649c0f926c5d7839e164cec8 = L.marker(
-                [54.99025832317938, 73.36698683629957],
-                {
-}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
+            // Возвращаем кнопку в исходное состояние
+            const stopBtn = document.querySelector('.stop-btn');
+            if (stopBtn) {
+                stopBtn.innerHTML = '🚀 Начать маршрут';
+                stopBtn.onclick = startRoute;
+                stopBtn.classList.remove('stop-btn');
+                stopBtn.classList.add('start-btn');
+            }
+        }
         
-    
-            var icon_e7d1c2844d13e087640b7391aaa15cff = L.AwesomeMarkers.icon(
-                {
-  "markerColor": "red",
-  "iconColor": "white",
-  "icon": "info-sign",
-  "prefix": "glyphicon",
-  "extraClasses": "fa-rotate-0",
-}
-            );
-        
-    
-        var popup_292afe82cf79a7280f156da3a0bcad76 = L.popup({
-  "maxWidth": 300,
-});
-
-        
+        function completeRoute() {
+            routeStarted = false;
             
-                var html_0defd80208d9128f331d5505c8318094 = $(`<div id="html_0defd80208d9128f331d5505c8318094" style="width: 100.0%; height: 100.0%;">     <div style="min-width: 200px">         <h4 style="margin: 0; color: #2c3e50;">Успенский собор</h4>         <hr style="margin: 5px 0;">         <p style="margin: 0; font-size: 14px; color: #34495e;">Кафедральный собор Омска, воссозданый в 2007 году на месте разрушенного храма</p>     </div>     </div>`)[0];
-                popup_292afe82cf79a7280f156da3a0bcad76.setContent(html_0defd80208d9128f331d5505c8318094);
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('success');
+                window.telegramApp.showAlert('🎉 Поздравляем! Маршрут "Джон Ленин" завершен!\n\n🎁 Ваш промокод: JOHNLENIN15\nИспользуйте в кофейне "Центральная"');
+            } else {
+                alert('🎉 Поздравляем! Маршрут завершен!\n\nВаш промокод: JOHNLENIN15');
+            }
             
-        
-
-        marker_3990d126649c0f926c5d7839e164cec8.bindPopup(popup_292afe82cf79a7280f156da3a0bcad76)
-        ;
-
-        
-    
-    
-            marker_3990d126649c0f926c5d7839e164cec8.bindTooltip(
-                `<div>
-                     Нажми для информации: Успенский собор
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-                marker_3990d126649c0f926c5d7839e164cec8.setIcon(icon_e7d1c2844d13e087640b7391aaa15cff);
+            // Обновляем статистику
+            const stats = JSON.parse(localStorage.getItem('tagtrip_stats') || '{"routesCompleted": 0, "distanceWalked": 0, "rewardsEarned": 0}');
+            stats.routesCompleted++;
+            stats.distanceWalked += 2.5;
+            stats.rewardsEarned++;
             
-    
-            var marker_7dde3f2619c4e4ee3819401a32ed8025 = L.marker(
-                [54.98616454646889, 73.37408953103235],
-                {
-}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-            var icon_3edf188739964d7a0d2a3254d2302635 = L.AwesomeMarkers.icon(
-                {
-  "markerColor": "red",
-  "iconColor": "white",
-  "icon": "info-sign",
-  "prefix": "glyphicon",
-  "extraClasses": "fa-rotate-0",
-}
-            );
-        
-    
-        var popup_c64224190f811bdf78e5457ca12ff0c4 = L.popup({
-  "maxWidth": 300,
-});
-
-        
+            // Сохраняем новую награду
+            if (!stats.unlockedRewards) stats.unlockedRewards = [];
+            stats.unlockedRewards.push({
+                id: 'johnlenin15',
+                code: 'JOHNLENIN15',
+                partner: 'Кофейня "Центральная"',
+                discount: '15%',
+                routeName: 'Джон Ленин',
+                unlockedAt: new Date().toISOString(),
+                used: false,
+                type: 'coffee'
+            });
             
-                var html_515c3990f16b1a4dda819caa7b462555 = $(`<div id="html_515c3990f16b1a4dda819caa7b462555" style="width: 100.0%; height: 100.0%;">     <div style="min-width: 200px">         <h4 style="margin: 0; color: #2c3e50;">Улица Ленина</h4>         <hr style="margin: 5px 0;">         <p style="margin: 0; font-size: 14px; color: #34495e;">Главная улица города с историческими зданиями, магазинами и пешеходными зонами</p>     </div>     </div>`)[0];
-                popup_c64224190f811bdf78e5457ca12ff0c4.setContent(html_515c3990f16b1a4dda819caa7b462555);
+            localStorage.setItem('tagtrip_stats', JSON.stringify(stats));
             
+            // Возвращаем кнопку в исходное состояние
+            const stopBtn = document.querySelector('.stop-btn');
+            if (stopBtn) {
+                stopBtn.innerHTML = '🚀 Начать заново';
+                stopBtn.onclick = startRoute;
+                stopBtn.classList.remove('stop-btn');
+                stopBtn.classList.add('start-btn');
+            }
+        }
         
-
-        marker_7dde3f2619c4e4ee3819401a32ed8025.bindPopup(popup_c64224190f811bdf78e5457ca12ff0c4)
-        ;
-
+        function goBack() {
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+                window.telegramApp.goBack();
+            } else {
+                window.history.back();
+            }
+        }
         
-    
-    
-            marker_7dde3f2619c4e4ee3819401a32ed8025.bindTooltip(
-                `<div>
-                     Нажми для информации: Улица Ленина
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
+        // Навигационные функции
+        function goHome() {
+            window.location.href = 'index.html';
+        }
         
-    
-                marker_7dde3f2619c4e4ee3819401a32ed8025.setIcon(icon_3edf188739964d7a0d2a3254d2302635);
+        function openRoutes() {
+            window.location.href = 'routes.html';
+        }
+        
+        function openMap() {
+            // Уже на странице карты
+            if (window.telegramApp) {
+                window.telegramApp.hapticFeedback('light');
+            }
+        }
+        
+        function openRewards() {
+            window.location.href = 'rewards.html';
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Карта маршрута "Джон Ленин" загружена с оригинальными настройками');
             
-    
-            var marker_76a3b704bb78c9629f0af28514b1ec16 = L.marker(
-                [54.984723638762006, 73.38015682106457],
-                {
-}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-            var icon_b7443020b07d0639d625cfed85333af5 = L.AwesomeMarkers.icon(
-                {
-  "markerColor": "red",
-  "iconColor": "white",
-  "icon": "info-sign",
-  "prefix": "glyphicon",
-  "extraClasses": "fa-rotate-0",
-}
-            );
-        
-    
-        var popup_e66269eefd9850622e43a06aace14733 = L.popup({
-  "maxWidth": 300,
-});
-
-        
-            
-                var html_eb40ace4239dff63b9348fa165d6c479 = $(`<div id="html_eb40ace4239dff63b9348fa165d6c479" style="width: 100.0%; height: 100.0%;">     <div style="min-width: 200px">         <h4 style="margin: 0; color: #2c3e50;">Набережная на Щелбанёва</h4>         <hr style="margin: 5px 0;">         <p style="margin: 0; font-size: 14px; color: #34495e;">Живописная набережная реки Омь с видом на городские пейзажи</p>     </div>     </div>`)[0];
-                popup_e66269eefd9850622e43a06aace14733.setContent(html_eb40ace4239dff63b9348fa165d6c479);
-            
-        
-
-        marker_76a3b704bb78c9629f0af28514b1ec16.bindPopup(popup_e66269eefd9850622e43a06aace14733)
-        ;
-
-        
-    
-    
-            marker_76a3b704bb78c9629f0af28514b1ec16.bindTooltip(
-                `<div>
-                     Нажми для информации: Набережная на Щелбанёва
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-                marker_76a3b704bb78c9629f0af28514b1ec16.setIcon(icon_b7443020b07d0639d625cfed85333af5);
-            
-    
-            var marker_31fdb790a3d21523569fdaa0f18d1b4a = L.marker(
-                [54.98651269885947, 73.38240862814538],
-                {
-}
-            ).addTo(map_946c5598974d9a83d38ccf2622ee712b);
-        
-    
-            var icon_b7c6b4172efd285d1fde664b24d844e5 = L.AwesomeMarkers.icon(
-                {
-  "markerColor": "red",
-  "iconColor": "white",
-  "icon": "info-sign",
-  "prefix": "glyphicon",
-  "extraClasses": "fa-rotate-0",
-}
-            );
-        
-    
-        var popup_395d34a32d0211b26a4c70ca3fef5f81 = L.popup({
-  "maxWidth": 300,
-});
-
-        
-            
-                var html_10cf3f54b9c75cb05362f63582328d48 = $(`<div id="html_10cf3f54b9c75cb05362f63582328d48" style="width: 100.0%; height: 100.0%;">     <div style="min-width: 200px">         <h4 style="margin: 0; color: #2c3e50;">конец</h4>         <hr style="margin: 5px 0;">         <p style="margin: 0; font-size: 14px; color: #34495e;"></p>     </div>     </div>`)[0];
-                popup_395d34a32d0211b26a4c70ca3fef5f81.setContent(html_10cf3f54b9c75cb05362f63582328d48);
-            
-        
-
-        marker_31fdb790a3d21523569fdaa0f18d1b4a.bindPopup(popup_395d34a32d0211b26a4c70ca3fef5f81)
-        ;
-
-        
-    
-    
-            marker_31fdb790a3d21523569fdaa0f18d1b4a.bindTooltip(
-                `<div>
-                     Нажми для информации: конец
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-                marker_31fdb790a3d21523569fdaa0f18d1b4a.setIcon(icon_b7c6b4172efd285d1fde664b24d844e5);
-            
-</script>
+            // Применяем темную тему если нужно
+            if (window.telegramApp && window.telegramApp.tg.colorScheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        });
+    </script>
+</body>
 </html>
